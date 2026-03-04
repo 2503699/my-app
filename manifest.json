@@ -1,0 +1,15 @@
+{
+  "name": "專業估價系統",
+  "short_name": "估價App",
+  "start_url": "估價.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1570/1570915.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
