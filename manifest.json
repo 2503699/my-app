@@ -1,7 +1,7 @@
 {
   "name": "專業估價系統",
   "short_name": "估價App",
-  "start_url": "估價.html",
+  "start_url": "./index.html", 
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#4f46e5",
