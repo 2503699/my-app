@@ -3,322 +3,1234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>專業管理版估價系統</title>
-    
+    <title>估價系統</title>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-        
-        /* 列印設定 */
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white !important; padding: 0 !important; }
-            .print-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        /* ── 顏色變數（護眼暖色系）─────────────────── */
+        :root {
+            --bg:        #F2EDE6;   /* 頁面背景：暖米色 */
+            --card:      #FDFAF6;   /* 卡片：乳白 */
+            --card2:     #F8F4EE;   /* 次要卡片 */
+            --border:    #DDD6CC;   /* 邊框：暖灰 */
+            --border2:   #EAE4DB;   /* 淡邊框 */
+            --text:      #1E1A14;   /* 主文字：深暖褐 */
+            --text2:     #7A6F62;   /* 次文字：中灰棕 */
+            --text3:     #B0A898;   /* 淡文字 */
+            --accent:    #3E7D5A;   /* 強調：森林綠 */
+            --accent-bg: #EBF3EE;   /* 強調背景 */
+            --accent-dk: #2D5E43;   /* 深綠 */
+            --num:       #2E6B8A;   /* 數字：鋼藍（護眼）*/
+            --danger:    #C0392B;
+            --shadow:    0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
         }
 
-        /* 隱藏原生數字箭頭 */
-        input::-webkit-outer-spin-button, 
+        /* ── 基礎 ──────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 15px; }
+        body {
+            font-family: 'Noto Sans TC', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 10px 10px 30px;
+            -webkit-tap-highlight-color: transparent;
+            line-height: 1.4;
+        }
+        input, textarea, select { font-family: inherit; font-size: 15px; color: var(--text); }
+        input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; }
-        
-        /* 手機端輸入框優化：防止 iOS 自動放大 */
-        @media (max-width: 768px) {
-            input, textarea, select { font-size: 16px !important; }
+        /* ── 佈局容器 ──────────────────────────────── */
+        #app { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+        /* ── 頂部導覽列 ─────────────────────────────── */
+        nav {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 11px 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text2);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background .15s, color .15s;
+        }
+        .tab-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .tab-btn.active {
+            background: var(--accent-bg);
+            color: var(--accent);
+        }
+        .tab-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+
+        /* ── 卡片 ──────────────────────────────────── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .card-inner { padding: 10px 12px; }
+
+        /* ── 頭部資訊列（客戶＋稅率）─────────────────── */
+        .info-row {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .info-field {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 11px;
+            box-shadow: var(--shadow);
+        }
+        .info-field svg { width: 15px; height: 15px; color: var(--text3); flex-shrink: 0; }
+        .info-field input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-weight: 700;
+            width: 100%;
+        }
+        .info-field input::placeholder { color: var(--text3); font-weight: 400; }
+        .info-field .label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text2);
+            white-space: nowrap;
+        }
+        .field-client { flex: 1; }
+        .field-tax { width: 110px; flex-shrink: 0; }
+
+        /* ── 報價品項表格 ───────────────────────────── */
+        .table-header {
+            display: grid;
+            grid-template-columns: 1fr 52px 70px 90px 68px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border2);
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text3);
+            letter-spacing: .04em;
+        }
+        .th-unit   { text-align: center; }
+        .th-price  { text-align: right; }
+        .th-qty    { text-align: center; }
+        .th-sub    { text-align: right; }
+
+        /* ── 單個品項列 ─────────────────────────────── */
+        .item-row {
+            border-bottom: 1px solid var(--border2);
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .item-name-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: var(--card2);
+            border-radius: 7px;
+            padding: 7px 9px;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+            border: 1px solid transparent;
+            transition: border-color .15s;
+        }
+        .item-name-input:focus {
+            border-color: var(--accent);
+            background: #FFF;
+        }
+        .item-name-input::placeholder { color: var(--text3); font-weight: 400; font-size: 13px; }
+
+        .item-bottom {
+            display: grid;
+            grid-template-columns: 52px 1fr 90px 1fr;
+            align-items: center;
+            gap: 4px;
+        }
+        .item-unit-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 12px;
+            color: var(--text2);
+            text-align: center;
+            width: 100%;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .item-unit-input::placeholder { color: var(--text3); }
+        .item-price-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--num);
+            text-align: right;
+            width: 100%;
+            padding: 4px 2px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .qty-ctrl {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            background: var(--card2);
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            padding: 2px 3px;
+        }
+        .qty-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--accent);
+            padding: 3px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            transition: background .1s;
+        }
+        .qty-btn:active { background: var(--accent-bg); }
+        .qty-btn svg { width: 15px; height: 15px; }
+        .qty-input {
+            width: 30px;
+            text-align: center;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-weight: 900;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .item-subtotal {
+            font-weight: 900;
+            font-size: 14px;
+            color: var(--text);
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .del-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            padding: 6px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            transition: color .15s, background .15s;
+        }
+        .del-btn:active { color: var(--danger); background: #FFF0EE; }
+        .del-btn svg { width: 15px; height: 15px; }
+
+        /* ── 新增品項按鈕 ─────────────────────────── */
+        .add-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 10px;
+            background: var(--card2);
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            border-top: 1px dashed var(--border);
+            transition: background .15s;
+        }
+        .add-btn:active { background: var(--accent-bg); }
+        .add-btn svg { width: 16px; height: 16px; }
+
+        /* ── 合計卡片 ──────────────────────────────── */
+        .totals-card {
+            background: #263C30;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            font-size: 13px;
+            color: rgba(255,255,255,.55);
+        }
+        .total-divider {
+            height: 1px;
+            background: rgba(255,255,255,.1);
+            margin: 6px 0;
+        }
+        .total-grand {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .total-grand-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,.55);
+        }
+        .total-grand-amount {
+            font-size: 26px;
+            font-weight: 900;
+            color: #7DD8A8;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -.5px;
+        }
+
+        /* ── 備註框 ───────────────────────────────── */
+        .note-wrap { display: flex; flex-direction: column; gap: 4px; }
+        .note-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .05em; padding-left: 2px; }
+        textarea#note {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            outline: none;
+            font-size: 13px;
+            color: var(--text);
+            resize: vertical;
+            box-shadow: var(--shadow);
+            transition: border-color .15s;
+            min-height: 70px;
+        }
+        textarea#note:focus { border-color: var(--accent); }
+        textarea#note::placeholder { color: var(--text3); }
+
+        /* ── 列印按鈕 ─────────────────────────────── */
+        .print-btn {
+            background: var(--accent-bg);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background .15s;
+            white-space: nowrap;
+        }
+        .print-btn:active { background: var(--accent); color: #fff; }
+        .print-btn svg { width: 14px; height: 14px; }
+
+        /* ── 品項庫管理 ─────────────────────────────── */
+        .manage-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border2);
+            background: var(--card2);
+        }
+        .manage-header h2 { font-size: 15px; font-weight: 900; color: var(--text); }
+        .manage-header p  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+        .lib-add-form {
+            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: 1fr 60px 80px auto;
+            gap: 6px;
+            border-bottom: 1px solid var(--border2);
+            background: var(--card);
+        }
+        .lib-input {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            background: var(--card2);
+            outline: none;
+            transition: border-color .15s;
+        }
+        .lib-input:focus { border-color: var(--accent); background: #fff; }
+        .lib-input::placeholder { color: var(--text3); }
+        .lib-add-submit {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .15s;
+        }
+        .lib-add-submit:active { background: var(--accent-dk); }
+
+        .lib-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border2);
+            gap: 10px;
+            transition: background .1s;
+        }
+        .lib-item:last-child { border-bottom: none; }
+        .lib-item:active { background: var(--card2); }
+        .lib-item-info { flex: 1; }
+        .lib-item-name { font-weight: 700; font-size: 14px; color: var(--text); }
+        .lib-item-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
+        .lib-del-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            padding: 6px;
+            border-radius: 7px;
+            transition: color .15s;
+        }
+        .lib-del-btn:active { color: var(--danger); }
+        .lib-del-btn svg { width: 15px; height: 15px; }
+
+        /* ── Header row (title + print) ─────────────── */
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 2px;
+        }
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--text);
+        }
+        .header-icon {
+            background: var(--accent);
+            color: #fff;
+            border-radius: 8px;
+            padding: 5px;
+            display: flex;
+        }
+        .header-icon svg { width: 14px; height: 14px; }
+
+        /* ── 備份區塊 ─────────────────────────────── */
+        .backup-section {
+            padding: 12px 14px;
+            border-top: 1px solid var(--border2);
+            background: var(--card2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .backup-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .backup-title svg { width: 13px; height: 13px; color: var(--text3); }
+        .backup-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+        .backup-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 8px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: opacity .15s, transform .1s;
+        }
+        .backup-btn:active { opacity: .8; transform: scale(.97); }
+        .backup-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .btn-export {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-import {
+            background: var(--card);
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .backup-info {
+            font-size: 11px;
+            color: var(--text3);
+            text-align: center;
+            line-height: 1.5;
+        }
+        .backup-info strong { color: var(--text2); }
+
+        /* ── toast 提示 ──────────────────────────── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: #263C30;
+            color: #7DD8A8;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s, transform .25s;
+            white-space: nowrap;
+            z-index: 999;
+            box-shadow: 0 4px 16px rgba(0,0,0,.2);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── 群組頁籤 ─────────────────────────────── */
+        .group-tabs-wrap {
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+        }
+        .group-tabs {
+            display: flex;
+            overflow-x: auto;
+            flex: 1;
+            scrollbar-width: none;
+        }
+        .group-tabs::-webkit-scrollbar { display: none; }
+        .group-tab {
+            flex-shrink: 0;
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text2);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color .15s, border-color .15s, background .15s;
+        }
+        .group-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: var(--accent-bg);
+        }
+        .group-add-btn {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--accent-bg);
+            border: none;
+            border-left: 1px solid var(--border2);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .15s;
+        }
+        .group-add-btn:active { background: #d5ead9; }
+        .group-add-btn svg { width: 13px; height: 13px; }
+
+        /* ── 群組標題列 ───────────────────────────── */
+        .group-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border2);
+        }
+        .group-name-display {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--text);
+        }
+        .group-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+            color: var(--text3);
+            display: flex;
+            align-items: center;
+            transition: color .15s, background .15s;
+        }
+        .group-action-btn:active { color: var(--text); background: var(--border2); }
+        .group-action-btn.danger:active { color: var(--danger); }
+        .group-action-btn svg { width: 15px; height: 15px; }
+
+        /* ── 自訂對話框 ──────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.45);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 900;
+            padding: 20px;
+        }
+        .modal-box {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.2);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--text);
+        }
+        .modal-input {
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--card2);
+            outline: none;
+            width: 100%;
+            transition: border-color .15s;
+        }
+        .modal-input:focus { border-color: var(--accent); background: #fff; }
+        .modal-btns { display: flex; gap: 8px; }
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: opacity .15s;
+        }
+        .modal-btn:active { opacity: .8; }
+        .modal-btn-cancel { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
+        .modal-btn-ok     { background: var(--accent); color: #fff; }
+
+        /* ── 列印樣式 ─────────────────────────────── */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+            .totals-card { background: #1a1a1a; }
+        }
+
+        /* ── 桌面版補強 ────────────────────────────── */
+        @media (min-width: 560px) {
+            body { padding: 16px 16px 40px; }
+            #app { gap: 10px; }
+            .table-header {
+                grid-template-columns: 1fr 60px 80px 100px 72px;
+            }
+            .item-bottom {
+                grid-template-columns: 60px 1fr 100px 1fr;
+            }
+            .lib-add-form {
+                grid-template-columns: 1fr 70px 90px auto;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen py-4 md:py-6 px-3 md:px-4 text-slate-900">
+<body>
 
-    <div id="app" class="max-w-5xl mx-auto space-y-4 md:space-y-6">
-        <nav class="bg-white px-4 md:px-6 py-1 rounded-2xl shadow-sm border border-slate-200 flex gap-6 md:gap-8 no-print overflow-x-auto">
-            <button onclick="switchView('estimate')" id="tab-estimate" class="py-3 font-bold transition tab-active flex items-center gap-2 whitespace-nowrap">
-                <i data-lucide="file-text" class="w-5 h-5"></i> 製作報價單
-            </button>
-            <button onclick="switchView('manage')" id="tab-manage" class="py-3 font-bold text-slate-400 hover:text-indigo-600 transition flex items-center gap-2 whitespace-nowrap">
-                <i data-lucide="database" class="w-5 h-5"></i> 管理品項庫
-            </button>
-        </nav>
+<div id="app">
 
-        <div id="view-estimate" class="space-y-4 md:space-y-6">
-            <header class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center no-print">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-600 p-2 rounded-xl text-white">
-                        <i data-lucide="calculator" class="w-5 h-5"></i>
-                    </div>
-                    <h1 class="text-lg md:text-xl font-black tracking-tight">報價單編輯器</h1>
-                </div>
-                <button onclick="window.print()" class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition flex items-center gap-2 font-bold text-sm">
-                    <i data-lucide="printer" class="w-4 h-4"></i> <span class="hidden md:inline">列印 / PDF</span>
-                </button>
-            </header>
+    <!-- ── 導覽列 ── -->
+    <nav class="no-print">
+        <button class="tab-btn active" id="tab-estimate" onclick="switchView('estimate')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z"/><path d="M14 2v6h6"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+            製作報價單
+        </button>
+        <div class="tab-divider"></div>
+        <button class="tab-btn" id="tab-manage" onclick="switchView('manage')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+            管理品項庫
+        </button>
+    </nav>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 no-print">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3">
-                    <i data-lucide="user" class="text-slate-400 w-5 h-5"></i>
-                    <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱..." class="w-full outline-none font-bold bg-transparent">
+    <!-- ═══════════════ 報價單頁面 ═══════════════ -->
+    <div id="view-estimate">
+
+        <!-- 標題列 -->
+        <div class="header-row no-print">
+            <div class="header-title">
+                <div class="header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="12" r="1" fill="currentColor"/><circle cx="16" cy="10" r="1" fill="currentColor"/></svg>
                 </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3">
-                    <span class="text-sm font-bold text-slate-400">稅率 (%)</span>
-                    <input id="taxRate" type="number" value="5" oninput="updateTotals()" class="w-full outline-none font-bold bg-transparent text-right">
-                </div>
+                報價單編輯器
             </div>
+            <button class="print-btn" onclick="window.print()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+                列印/PDF
+            </button>
+        </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-card">
-                <div class="hidden md:grid md:grid-cols-12 bg-slate-50 border-b border-slate-100 text-slate-500 text-sm font-bold py-4 px-6">
-                    <div class="col-span-4">品項名稱</div>
-                    <div class="col-span-2 text-center">單位</div>
-                    <div class="col-span-2 text-right">單價</div>
-                    <div class="col-span-2 text-center">數量</div>
-                    <div class="col-span-2 text-right">小計</div>
-                </div>
-
-                <div id="estimateItems" class="divide-y divide-slate-100">
-                    </div>
-
-                <div class="p-4 bg-slate-50/50 no-print border-t border-slate-100">
-                    <button onclick="addEstimateItem()" class="w-full py-4 bg-white border border-dashed border-indigo-200 rounded-xl text-indigo-600 font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 active:scale-95 transition-all">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> 新增品項
-                    </button>
-                </div>
+        <!-- 客戶名稱 + 稅率 -->
+        <div class="info-row no-print">
+            <div class="info-field field-client">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱">
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
-                <div class="space-y-2 no-print order-2 md:order-1">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">備註事項</label>
-                    <textarea id="note" oninput="saveCurrentData()" rows="4" placeholder="輸入備註或付款說明..." class="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
-                </div>
-                <div class="bg-slate-900 p-6 rounded-3xl text-white shadow-xl space-y-4 order-1 md:order-2">
-                    <div class="flex justify-between items-center opacity-60 text-sm"><span>合計金額</span><span id="subtotalDisplay">$0</span></div>
-                    <div class="flex justify-between items-center opacity-60 text-sm"><span>稅額</span><span id="taxDisplay">$0</span></div>
-                    <div class="h-px bg-white/10 my-2"></div>
-                    <div class="flex justify-between items-end"><span class="text-sm font-bold text-slate-400">應付總額</span><span id="grandTotalDisplay" class="text-3xl font-black text-indigo-400">$0</span></div>
-                </div>
+            <div class="info-field field-tax">
+                <span class="label">稅率%</span>
+                <input id="taxRate" type="number" value="5" oninput="updateTotals()" style="text-align:right; width:100%">
             </div>
         </div>
 
-        <div id="view-manage" class="hidden space-y-6">
-            <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-xl font-bold text-slate-800">常用品項庫管理</h2>
-                <p class="text-sm text-slate-400 mt-1">設定好單價，報價時輸入名稱會自動帶入。</p>
-            </header>
+        <!-- 品項表格 -->
+        <div class="card">
+            <div class="table-header no-print">
+                <span>品項名稱</span>
+                <span class="th-unit">單位</span>
+                <span class="th-price">單價</span>
+                <span class="th-qty">數量</span>
+                <span class="th-sub">小計</span>
+            </div>
+            <div id="estimateItems"></div>
+            <button class="add-btn no-print" onclick="addEstimateItem()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                新增品項
+            </button>
+        </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <input id="libName" placeholder="品項名稱" class="p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input id="libUnit" placeholder="單位" class="p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input id="libPrice" type="number" placeholder="單價" class="p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="addLibraryItem()" class="bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 active:scale-95 transition">新增至庫存</button>
+        <!-- 合計 + 備註 -->
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="totals-card">
+                <div class="total-row">
+                    <span>合計金額</span>
+                    <span id="subtotalDisplay">$0</span>
+                </div>
+                <div class="total-row">
+                    <span>稅額</span>
+                    <span id="taxDisplay">$0</span>
+                </div>
+                <div class="total-divider"></div>
+                <div class="total-grand">
+                    <span class="total-grand-label">應付總額</span>
+                    <span class="total-grand-amount" id="grandTotalDisplay">$0</span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div id="libraryItems" class="divide-y divide-slate-100">
-                    </div>
+            <div class="note-wrap no-print">
+                <span class="note-label">備註事項</span>
+                <textarea id="note" oninput="saveCurrentData()" rows="3" placeholder="付款說明、備注…"></textarea>
+            </div>
+        </div>
+
+    </div><!-- /view-estimate -->
+
+
+    <!-- ═══════════════ 品項庫頁面 ═══════════════ -->
+    <div id="view-manage" style="display:none; display:none; flex-direction:column; gap:8px;">
+
+        <!-- 群組頁籤列 -->
+        <div class="card" style="overflow:hidden;">
+            <div class="group-tabs-wrap">
+                <div id="groupTabs" class="group-tabs"></div>
+                <button class="group-add-btn" onclick="addGroup()" title="新增群組">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    新增群組
+                </button>
+            </div>
+        </div>
+
+        <!-- 當前群組內容 -->
+        <div class="card" id="groupPanel">
+            <!-- 群組標題列（含重新命名＋刪除群組） -->
+            <div class="group-panel-header" id="groupPanelHeader"></div>
+            <!-- 新增品項表單 -->
+            <div class="lib-add-form" id="libAddForm">
+                <input id="libName" class="lib-input" placeholder="品項名稱">
+                <input id="libUnit" class="lib-input" placeholder="單位">
+                <input id="libPrice" type="number" class="lib-input" placeholder="單價">
+                <button class="lib-add-submit" onclick="addLibraryItem()">新增</button>
+            </div>
+            <div id="libraryItems"></div>
+            <div id="emptyGroup" style="display:none; padding:24px; text-align:center; color:var(--text3); font-size:13px;">尚未新增品項</div>
+        </div>
+
+        <!-- 備份區塊 -->
+        <div class="card">
+            <div class="backup-section">
+                <div class="backup-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 8v4l3 3"/></svg>
+                    資料備份與還原
+                </div>
+                <div class="backup-btns">
+                    <button class="backup-btn btn-export" onclick="exportData()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        匯出備份
+                    </button>
+                    <button class="backup-btn btn-import" onclick="document.getElementById('importFile').click()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        匯入還原
+                    </button>
+                </div>
+                <div class="backup-info">
+                    上次備份：<strong id="lastBackupTime">尚未備份</strong><br>
+                    ⚠️ 建議每次新增品項後備份一次，換機前也要備份
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             </div>
         </div>
     </div>
 
-    <script>
-        // 資料初始化
-        let library = JSON.parse(localStorage.getItem('lib_data')) || [
-            { id: 1, name: '水泥粉刷', unit: '坪', price: 2500 },
-            { id: 2, name: '矽利康施工', unit: '支', price: 150 }
-        ];
+</div><!-- /app -->
 
-        let currentEstimate = JSON.parse(localStorage.getItem('est_current')) || {
-            clientName: '',
-            taxRate: 5,
-            note: '',
-            items: [{ id: Date.now(), name: '', unit: '', price: 0, quantity: 1 }]
-        };
+<div id="toast"></div>
 
-        function init() {
-            lucide.createIcons();
-            renderLibrary();
-            renderEstimate();
-            // 載入暫存資料
-            document.getElementById('clientName').value = currentEstimate.clientName || '';
-            document.getElementById('taxRate').value = currentEstimate.taxRate || 5;
-            document.getElementById('note').value = currentEstimate.note || '';
-        }
+<!-- datalist 建在全域，方便報價單使用 -->
+<datalist id="lib-options"></datalist>
 
-        function switchView(view) {
-            document.getElementById('view-estimate').classList.toggle('hidden', view !== 'estimate');
-            document.getElementById('view-manage').classList.toggle('hidden', view !== 'manage');
-            document.getElementById('tab-estimate').className = `py-3 font-bold transition flex items-center gap-2 ${view === 'estimate' ? 'tab-active' : 'text-slate-400 hover:text-indigo-600'}`;
-            document.getElementById('tab-manage').className = `py-3 font-bold transition flex items-center gap-2 ${view === 'manage' ? 'tab-active' : 'text-slate-400 hover:text-indigo-600'}`;
-        }
+<script>
+// ═══════════════════════════════════════════════════
+//  資料結構
+//  groups: [{id, name, items:[{id, name, unit, price}]}]
+//  currentEstimate: {clientName, taxRate, note, activeGroupId, items:[...]}
+// ═══════════════════════════════════════════════════
 
-        // 渲染品項庫
-        function renderLibrary() {
-            const container = document.getElementById('libraryItems');
-            container.innerHTML = library.length ? '' : '<div class="p-8 text-center text-slate-400 font-medium">庫存目前是空的</div>';
-            library.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center justify-between p-4 hover:bg-slate-50 transition';
-                div.innerHTML = `
-                    <div class="flex-1">
-                        <div class="font-bold text-slate-800">${item.name}</div>
-                        <div class="text-xs text-slate-400">${item.unit} / $${item.price.toLocaleString()}</div>
-                    </div>
-                    <button onclick="removeLibItem(${item.id})" class="p-2 text-slate-300 hover:text-red-500 transition">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+// 舊資料遷移：若有舊版 lib_data（flat array），包入預設群組
+function loadGroups() {
+    const raw = localStorage.getItem('groups_data');
+    if (raw) return JSON.parse(raw);
+    // 遷移舊資料
+    const oldLib = JSON.parse(localStorage.getItem('lib_data') || 'null');
+    const defaultItems = oldLib && Array.isArray(oldLib) && oldLib.length
+        ? oldLib
+        : [
+            { id: 1, name: '水泥粉刷',   unit: '坪',  price: 2500 },
+            { id: 2, name: '矽利康施工', unit: '支',  price: 150  }
+          ];
+    return [{ id: Date.now(), name: '預設', items: defaultItems }];
+}
+
+let groups = loadGroups();
+let activeGroupId = groups[0]?.id;
+
+let currentEstimate = JSON.parse(localStorage.getItem('est_current')) || {
+    clientName: '', taxRate: 5, note: '',
+    items: [{ id: Date.now(), name: '', unit: '', price: 0, quantity: 1 }]
+};
+
+// ── 取得目前群組 ──────────────────────────────────
+function activeGroup() {
+    return groups.find(g => g.id === activeGroupId) || groups[0];
+}
+
+// ── 取得所有品項（flat，供 datalist）────────────────
+function allItems() {
+    return groups.flatMap(g => g.items);
+}
+
+// ── 儲存 ─────────────────────────────────────────
+function saveGroups() {
+    localStorage.setItem('groups_data', JSON.stringify(groups));
+}
+
+// ══════════════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════════════
+function init() {
+    renderGroupTabs();
+    renderGroupPanel();
+    renderEstimate();
+    document.getElementById('clientName').value = currentEstimate.clientName || '';
+    document.getElementById('taxRate').value    = currentEstimate.taxRate ?? 5;
+    document.getElementById('note').value       = currentEstimate.note || '';
+    const lb = localStorage.getItem('last_backup');
+    if (lb) document.getElementById('lastBackupTime').textContent = lb;
+}
+
+// ── 切換頁面 ──────────────────────────────────────
+function switchView(view) {
+    document.getElementById('view-estimate').style.display = view === 'estimate' ? '' : 'none';
+    document.getElementById('view-manage').style.display   = view === 'manage'   ? 'flex' : 'none';
+    document.getElementById('tab-estimate').className = 'tab-btn' + (view === 'estimate' ? ' active' : '');
+    document.getElementById('tab-manage').className   = 'tab-btn' + (view === 'manage'   ? ' active' : '');
+}
+
+// ══════════════════════════════════════════════════
+//  群組管理
+// ══════════════════════════════════════════════════
+function renderGroupTabs() {
+    const wrap = document.getElementById('groupTabs');
+    wrap.innerHTML = groups.map(g => `
+        <button class="group-tab${g.id === activeGroupId ? ' active' : ''}"
+            onclick="selectGroup(${g.id})">${escHtml(g.name)}</button>`).join('');
+}
+
+function renderGroupPanel() {
+    const g = activeGroup();
+    if (!g) {
+        document.getElementById('groupPanelHeader').innerHTML =
+            '<div style="padding:12px;color:var(--text3);font-size:13px;">請先新增一個群組</div>';
+        document.getElementById('libAddForm').style.display = 'none';
+        document.getElementById('libraryItems').innerHTML = '';
+        return;
+    }
+    document.getElementById('libAddForm').style.display = '';
+
+    // 標題列
+    document.getElementById('groupPanelHeader').innerHTML = `
+        <div class="group-name-display">📁 ${escHtml(g.name)}</div>
+        <button class="group-action-btn" onclick="renameGroup(${g.id})" title="重新命名">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        <button class="group-action-btn danger" onclick="deleteGroup(${g.id})" title="刪除群組">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>`;
+
+    // 品項列表
+    const c = document.getElementById('libraryItems');
+    const empty = document.getElementById('emptyGroup');
+    if (!g.items.length) {
+        c.innerHTML = ''; empty.style.display = '';
+    } else {
+        empty.style.display = 'none';
+        c.innerHTML = g.items.map(item => `
+            <div class="lib-item">
+                <div class="lib-item-info">
+                    <div class="lib-item-name">${escHtml(item.name)}</div>
+                    <div class="lib-item-meta">${escHtml(item.unit)} ／ $${Number(item.price).toLocaleString()}</div>
+                </div>
+                <button class="lib-del-btn" onclick="removeLibItem(${g.id},${item.id})">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>`).join('');
+    }
+    updateDatalist();
+}
+
+function selectGroup(id) {
+    activeGroupId = id;
+    renderGroupTabs();
+    renderGroupPanel();
+}
+
+function addGroup() {
+    showModal('新增群組', '', '群組名稱（例：A公司）', name => {
+        if (!name) return;
+        const g = { id: Date.now(), name, items: [] };
+        groups.push(g);
+        activeGroupId = g.id;
+        saveGroups();
+        renderGroupTabs();
+        renderGroupPanel();
+        showToast(`✅ 已新增群組「${name}」`);
+    });
+}
+
+function renameGroup(id) {
+    const g = groups.find(x => x.id === id);
+    if (!g) return;
+    showModal('重新命名群組', g.name, '群組名稱', newName => {
+        if (!newName) return;
+        g.name = newName;
+        saveGroups();
+        renderGroupTabs();
+        renderGroupPanel();
+        showToast('✅ 已更新群組名稱');
+    });
+}
+
+function deleteGroup(id) {
+    if (groups.length <= 1) { showToast('❌ 至少需要保留一個群組'); return; }
+    const g = groups.find(x => x.id === id);
+    showConfirm(`確定刪除群組「${g?.name}」？\n群組內所有品項也會一起刪除`, () => {
+        groups = groups.filter(x => x.id !== id);
+        activeGroupId = groups[0]?.id;
+        saveGroups();
+        renderGroupTabs();
+        renderGroupPanel();
+        updateDatalist();
+        showToast('✅ 群組已刪除');
+    });
+}
+
+// ══════════════════════════════════════════════════
+//  品項管理
+// ══════════════════════════════════════════════════
+function addLibraryItem() {
+    const g     = activeGroup();
+    const name  = document.getElementById('libName').value.trim();
+    const unit  = document.getElementById('libUnit').value.trim();
+    const price = Number(document.getElementById('libPrice').value);
+    if (!name) { showToast('❌ 請輸入品項名稱'); return; }
+    if (!g)    { showToast('❌ 請先選擇群組'); return; }
+    g.items.push({ id: Date.now(), name, unit, price });
+    document.getElementById('libName').value  = '';
+    document.getElementById('libUnit').value  = '';
+    document.getElementById('libPrice').value = '';
+    saveGroups();
+    renderGroupPanel();
+    renderEstimate(); // 更新 datalist
+    showToast(`✅ 已新增「${name}」`);
+}
+
+function removeLibItem(groupId, itemId) {
+    const g = groups.find(x => x.id === groupId);
+    if (!g) return;
+    showConfirm('確定刪除此品項？', () => {
+        g.items = g.items.filter(i => i.id !== itemId);
+        saveGroups();
+        renderGroupPanel();
+        updateDatalist();
+        showToast('✅ 品項已刪除');
+    });
+}
+
+function updateDatalist() {
+    document.getElementById('lib-options').innerHTML =
+        allItems().map(l => `<option value="${escHtml(l.name)}">${escHtml(l.unit)} / $${l.price}</option>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  報價單
+// ══════════════════════════════════════════════════
+function renderEstimate() {
+    updateDatalist();
+    const c = document.getElementById('estimateItems');
+    c.innerHTML = currentEstimate.items.map(item => `
+        <div class="item-row">
+            <div class="item-top">
+                <input type="text" list="lib-options"
+                    value="${escHtml(item.name)}"
+                    oninput="updateEstimateItem(${item.id},'name',this.value)"
+                    class="item-name-input" placeholder="品項名稱…">
+                <button class="del-btn no-print" onclick="removeEstimateItem(${item.id})">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="item-bottom">
+                <input type="text" value="${escHtml(item.unit)}"
+                    oninput="updateEstimateItem(${item.id},'unit',this.value)"
+                    class="item-unit-input" placeholder="單位">
+                <input type="number" value="${item.price}"
+                    oninput="updateEstimateItem(${item.id},'price',this.value)"
+                    class="item-price-input" placeholder="單價">
+                <div class="qty-ctrl no-print">
+                    <button class="qty-btn" onclick="changeQty(${item.id},-1)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </button>
-                `;
-                container.appendChild(div);
-            });
-            lucide.createIcons();
-            localStorage.setItem('lib_data', JSON.stringify(library));
-        }
+                    <input type="number" value="${item.quantity}"
+                        oninput="updateEstimateItem(${item.id},'quantity',this.value)"
+                        class="qty-input">
+                    <button class="qty-btn" onclick="changeQty(${item.id},1)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+                <span class="item-subtotal">$${(item.price * item.quantity).toLocaleString()}</span>
+            </div>
+        </div>`).join('');
+    updateTotals();
+}
 
-        function addLibraryItem() {
-            const name = document.getElementById('libName').value.trim();
-            const unit = document.getElementById('libUnit').value.trim();
-            const price = Number(document.getElementById('libPrice').value);
-            if (!name) return alert('請輸入品項名稱');
-            library.push({ id: Date.now(), name, unit, price });
-            document.getElementById('libName').value = '';
-            document.getElementById('libUnit').value = '';
-            document.getElementById('libPrice').value = '';
-            renderLibrary();
-            renderEstimate(); // 同步更新下拉選單
-        }
+function changeQty(id, delta) {
+    const item = currentEstimate.items.find(i => i.id === id);
+    if (item) { item.quantity = Math.max(0, (item.quantity||0)+delta); renderEstimate(); saveCurrentData(); }
+}
+function addEstimateItem() {
+    currentEstimate.items.push({ id: Date.now(), name:'', unit:'', price:0, quantity:1 });
+    renderEstimate(); saveCurrentData();
+}
+function removeEstimateItem(id) {
+    if (currentEstimate.items.length > 1) {
+        currentEstimate.items = currentEstimate.items.filter(i => i.id !== id);
+        renderEstimate(); saveCurrentData();
+    }
+}
+function updateEstimateItem(id, field, value) {
+    const item = currentEstimate.items.find(i => i.id === id);
+    if (!item) return;
+    item[field] = (field==='price'||field==='quantity') ? Number(value) : value;
+    if (field === 'name') {
+        const match = allItems().find(l => l.name === value);
+        if (match) { item.price = match.price; item.unit = match.unit; renderEstimate(); return; }
+    }
+    const rows = document.getElementById('estimateItems').querySelectorAll('.item-row');
+    const idx  = currentEstimate.items.indexOf(item);
+    if (rows[idx]) { const s = rows[idx].querySelector('.item-subtotal'); if(s) s.textContent='$'+(item.price*item.quantity).toLocaleString(); }
+    updateTotals(); saveCurrentData();
+}
+function updateTotals() {
+    const sub = currentEstimate.items.reduce((s,i)=>s+i.price*i.quantity, 0);
+    const rate = Number(document.getElementById('taxRate').value)||0;
+    const tax  = Math.round(sub*rate/100);
+    document.getElementById('subtotalDisplay').textContent  = '$'+sub.toLocaleString();
+    document.getElementById('taxDisplay').textContent       = '$'+tax.toLocaleString();
+    document.getElementById('grandTotalDisplay').textContent = '$'+(sub+tax).toLocaleString();
+}
+function saveCurrentData() {
+    currentEstimate.clientName = document.getElementById('clientName').value;
+    currentEstimate.taxRate    = Number(document.getElementById('taxRate').value);
+    currentEstimate.note       = document.getElementById('note').value;
+    localStorage.setItem('est_current', JSON.stringify(currentEstimate));
+}
 
-        function removeLibItem(id) {
-            if (confirm('確定刪除此標準品項？')) {
-                library = library.filter(i => i.id !== id);
-                renderLibrary();
-                renderEstimate();
-            }
-        }
+// ══════════════════════════════════════════════════
+//  備份與還原
+// ══════════════════════════════════════════════════
+function exportData() {
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+    showModal('匯出備份', `估價系統備份_${date}`, '輸入備份檔案名稱', filename => {
+        if (!filename) return;
+        const data = {
+            version: 2,
+            exportedAt: new Date().toISOString(),
+            groups: groups,
+            currentEstimate: currentEstimate
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = filename.endsWith('.json') ? filename : filename+'.json';
+        a.click(); URL.revokeObjectURL(url);
+        const now = new Date().toLocaleString('zh-TW');
+        localStorage.setItem('last_backup', now);
+        document.getElementById('lastBackupTime').textContent = now;
+        showToast('✅ 備份已下載！請存至安全位置');
+    });
+}
 
-        // 渲染報價單內容 (行動優化版)
-        function renderEstimate() {
-            const container = document.getElementById('estimateItems');
-            container.innerHTML = '';
-            currentEstimate.items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'p-4 md:p-0 md:grid md:grid-cols-12 md:items-center hover:bg-slate-50/30 transition group relative';
-                div.innerHTML = `
-                    <div class="col-span-4 md:py-4 md:px-6 mb-3 md:mb-0">
-                        <div class="flex items-center gap-2">
-                            <input type="text" list="lib-options" value="${item.name}" 
-                                oninput="updateEstimateItem(${item.id}, 'name', this.value)" 
-                                class="w-full bg-slate-100 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none outline-none border-b border-transparent focus:border-indigo-400 font-bold text-slate-800" 
-                                placeholder="品項名稱...">
-                            <button onclick="removeEstimateItem(${item.id})" class="no-print md:hidden p-2 text-red-400 active:bg-red-50 rounded-lg">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                        <datalist id="lib-options">
-                            ${library.map(l => `<option value="${l.name}">${l.unit} / $${l.price}</option>`).join('')}
-                        </datalist>
-                    </div>
+function importData(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const data = JSON.parse(e.target.result);
+            // 支援 v1（flat library）和 v2（groups）
+            let importedGroups;
+            if (data.groups && Array.isArray(data.groups)) {
+                importedGroups = data.groups;
+            } else if (data.library && Array.isArray(data.library)) {
+                importedGroups = [{ id: Date.now(), name: '匯入資料', items: data.library }];
+            } else { showToast('❌ 檔案格式錯誤'); return; }
 
-                    <div class="col-span-2 flex items-center md:justify-center mb-2 md:mb-0">
-                        <span class="md:hidden text-xs font-bold text-slate-400 w-12">單位</span>
-                        <input type="text" value="${item.unit}" oninput="updateEstimateItem(${item.id}, 'unit', this.value)" class="w-full bg-transparent outline-none text-left md:text-center text-slate-500">
-                    </div>
-                    <div class="col-span-2 flex items-center justify-end mb-4 md:mb-0">
-                        <span class="md:hidden text-xs font-bold text-slate-400 w-12 text-left">單價</span>
-                        <input type="number" value="${item.price}" oninput="updateEstimateItem(${item.id}, 'price', this.value)" class="w-full bg-transparent outline-none text-right font-mono font-bold text-indigo-600">
-                    </div>
-
-                    <div class="col-span-2 py-2 flex items-center justify-center bg-slate-50 md:bg-transparent rounded-2xl md:rounded-none px-4">
-                        <button onclick="changeQty(${item.id}, -1)" class="no-print p-2 hover:bg-indigo-100 rounded-full text-indigo-600">
-                            <i data-lucide="minus-circle" class="w-6 h-6 md:w-5 md:h-5"></i>
-                        </button>
-                        <input type="number" value="${item.quantity}" 
-                            oninput="updateEstimateItem(${item.id}, 'quantity', this.value)" 
-                            class="w-16 bg-transparent border-none text-center font-mono font-black text-xl md:text-base outline-none">
-                        <button onclick="changeQty(${item.id}, 1)" class="no-print p-2 hover:bg-indigo-100 rounded-full text-indigo-600">
-                            <i data-lucide="plus-circle" class="w-6 h-6 md:w-5 md:h-5"></i>
-                        </button>
-                    </div>
-
-                    <div class="col-span-2 py-3 flex items-center justify-end md:px-6">
-                        <span class="md:hidden text-xs font-bold text-slate-400 mr-auto">小計</span>
-                        <span class="font-black text-xl md:text-base text-slate-800">$${(item.price * item.quantity).toLocaleString()}</span>
-                        <button onclick="removeEstimateItem(${item.id})" class="hidden md:block ml-4 text-slate-200 hover:text-red-500 transition no-print">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            lucide.createIcons();
-            updateTotals();
-        }
-
-        function changeQty(id, delta) {
-            const item = currentEstimate.items.find(i => i.id === id);
-            if (item) {
-                const newQty = Math.max(0, (item.quantity || 0) + delta);
-                updateEstimateItem(id, 'quantity', newQty);
-                renderEstimate();
-            }
-        }
-
-        function addEstimateItem() {
-            currentEstimate.items.push({ id: Date.now(), name: '', unit: '', price: 0, quantity: 1 });
-            renderEstimate();
-            saveCurrentData();
-        }
-
-        function removeEstimateItem(id) {
-            if (currentEstimate.items.length > 1) {
-                currentEstimate.items = currentEstimate.items.filter(i => i.id !== id);
-                renderEstimate();
-                saveCurrentData();
-            }
-        }
-
-        function updateEstimateItem(id, field, value) {
-            const item = currentEstimate.items.find(i => i.id === id);
-            if (item) {
-                item[field] = (field === 'price' || field === 'quantity') ? Number(value) : value;
-                if (field === 'name') {
-                    const match = library.find(l => l.name === value);
-                    if (match) {
-                        item.price = match.price;
-                        item.unit = match.unit;
-                        renderEstimate();
-                    }
+            const totalItems = importedGroups.reduce((s,g)=>s+g.items.length,0);
+            showConfirm(`確定還原備份？\n共 ${importedGroups.length} 個群組、${totalItems} 個品項\n備份時間：${data.exportedAt ? new Date(data.exportedAt).toLocaleString('zh-TW') : '不明'}\n\n⚠️ 目前所有群組與品項將被取代`, () => {
+                groups = importedGroups;
+                activeGroupId = groups[0]?.id;
+                if (data.currentEstimate) {
+                    currentEstimate = data.currentEstimate;
+                    document.getElementById('clientName').value = currentEstimate.clientName||'';
+                    document.getElementById('taxRate').value    = currentEstimate.taxRate??5;
+                    document.getElementById('note').value       = currentEstimate.note||'';
                 }
-                updateTotals();
-                saveCurrentData();
-            }
-        }
+                saveGroups();
+                localStorage.setItem('est_current', JSON.stringify(currentEstimate));
+                renderGroupTabs(); renderGroupPanel(); renderEstimate();
+                showToast(`✅ 已還原 ${importedGroups.length} 個群組`);
+            });
+        } catch { showToast('❌ 讀取失敗，請確認檔案正確'); }
+        event.target.value = '';
+    };
+    reader.readAsText(file, 'utf-8');
+}
 
-        function updateTotals() {
-            const sub = currentEstimate.items.reduce((s, i) => s + (i.price * i.quantity), 0);
-            const rate = Number(document.getElementById('taxRate').value) || 0;
-            const tax = Math.round(sub * (rate / 100));
-            document.getElementById('subtotalDisplay').innerText = `$${sub.toLocaleString()}`;
-            document.getElementById('taxDisplay').innerText = `$${tax.toLocaleString()}`;
-            document.getElementById('grandTotalDisplay').innerText = `$${(sub + tax).toLocaleString()}`;
-        }
+// ══════════════════════════════════════════════════
+//  自訂 Modal（輸入框 + 確認框）
+// ══════════════════════════════════════════════════
+function showModal(title, defaultVal, placeholder, onOk) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-box">
+            <div class="modal-title">${escHtml(title)}</div>
+            <input class="modal-input" value="${escHtml(defaultVal)}" placeholder="${escHtml(placeholder)}" maxlength="40">
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
+                <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('.modal-input');
+    input.focus(); input.select();
+    overlay.querySelector('#modalOkBtn').onclick = () => {
+        const val = input.value.trim(); overlay.remove(); onOk(val);
+    };
+    input.addEventListener('keydown', e => { if(e.key==='Enter'){ const val=input.value.trim(); overlay.remove(); onOk(val); }});
+}
 
-        function saveCurrentData() {
-            currentEstimate.clientName = document.getElementById('clientName').value;
-            currentEstimate.taxRate = Number(document.getElementById('taxRate').value);
-            currentEstimate.note = document.getElementById('note').value;
-            localStorage.setItem('est_current', JSON.stringify(currentEstimate));
-        }
+function showConfirm(msg, onOk) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-box">
+            <div class="modal-title" style="white-space:pre-line;font-size:14px;font-weight:700;">${escHtml(msg)}</div>
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
+                <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#modalOkBtn').onclick = () => { overlay.remove(); onOk(); };
+}
 
-        init();
-    </script>
+// ── Toast ────────────────────────────────────────
+let _toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── 工具 ─────────────────────────────────────────
+function escHtml(s) {
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+init();
+</script>
 </body>
 </html>
