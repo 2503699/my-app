@@ -353,7 +353,7 @@ textarea#note:focus{border-color:var(--accent);}
     <div class="info-row no-print">
       <div class="info-field field-client">
         <span class="lbl">客戶</span>
-        <input id="clientName" oninput="saveCurrentData();syncClientName()" placeholder="客戶或案場名稱">
+        <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱">
       </div>
       <div class="info-field field-date">
         <span class="lbl">日期</span>
@@ -437,11 +437,7 @@ textarea#note:focus{border-color:var(--accent);}
           <div class="confirm-col-title">✍️ 客戶確認簽名</div>
           <div class="sig-box">
             <div class="sig-line"></div>
-            <span class="sig-name" id="sigClientName"></span>
-            <span class="sig-label">客戶簽名／日期</span>
-          </div>
-          <div class="no-print" style="font-size:11px;color:var(--text3);">
-            客戶名稱來自上方「客戶」欄位
+            <span class="sig-label">客戶確認簽名</span>
           </div>
         </div>
       </div>
@@ -620,7 +616,6 @@ async function init() {
 
   // restore fields
   document.getElementById('clientName').value = currentEstimate.clientName || '';
-  syncClientName();
   document.getElementById('quoteDate').value  = currentEstimate.quoteDate  || new Date().toISOString().split('T')[0];
   document.getElementById('taxRate').value    = currentEstimate.taxRate ?? 5;
   document.getElementById('note').value       = currentEstimate.note || '';
@@ -673,11 +668,6 @@ function applyStamp() {
   }
 }
 
-function syncClientName() {
-  const name = document.getElementById('clientName')?.value || '';
-  const el = document.getElementById('sigClientName');
-  if (el) el.textContent = name;
-}
 async function clearStamp() {
   stampDataURL = null;
   await dbSet('stamp_img', null);
