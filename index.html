@@ -165,9 +165,10 @@ textarea#note:focus{border-color:var(--accent);}
 .manage-header{padding:12px 14px;border-bottom:1px solid var(--border2);background:var(--card2);}
 .manage-header h2{font-size:15px;font-weight:900;}
 .manage-header p{font-size:12px;color:var(--text2);margin-top:2px;}
-.lib-add-form{padding:10px 12px;display:grid;
-  grid-template-columns:1fr 60px 80px auto;gap:6px;
+.lib-add-form{padding:10px 12px;display:flex;flex-direction:column;gap:8px;
   border-bottom:1px solid var(--border2);background:var(--card);}
+.lib-add-row1{display:flex;gap:6px;}
+.lib-add-row2{display:flex;gap:6px;align-items:stretch;}
 .lib-input{border:1px solid var(--border);border-radius:8px;padding:8px 10px;
   font-size:13px;background:var(--card2);outline:none;transition:.15s;}
 .lib-input:focus{border-color:var(--accent);background:#fff;}
@@ -261,7 +262,6 @@ textarea#note:focus{border-color:var(--accent);}
 @media(min-width:560px){
   body{padding:16px 16px 60px;}
   #app{gap:10px;}
-  .lib-add-form{grid-template-columns:1fr 70px 90px auto;}
 }
 </style>
 </head>
@@ -386,10 +386,18 @@ textarea#note:focus{border-color:var(--accent);}
     <div class="card" id="groupPanel">
       <div class="group-panel-header" id="groupPanelHeader"></div>
       <div class="lib-add-form" id="libAddForm">
-        <input id="libName" class="lib-input" placeholder="品項名稱">
-        <input id="libUnit" class="lib-input" placeholder="單位">
-        <input id="libPrice" type="number" class="lib-input" placeholder="單價">
-        <button class="lib-add-submit" onclick="addLibraryItem()">新增</button>
+        <div class="lib-add-row1">
+          <input id="libName" class="lib-input" placeholder="品項名稱" style="flex:1;">
+        </div>
+        <div class="lib-add-row2">
+          <div class="select-wrap" style="flex:1;">
+            <select id="libUnit" class="lib-input" style="width:100%;padding:8px 24px 8px 10px;-webkit-appearance:none;appearance:none;cursor:pointer;">
+              <option value="">單位</option>
+            </select>
+          </div>
+          <input id="libPrice" type="number" class="lib-input" placeholder="單價" style="flex:1;">
+          <button class="lib-add-submit" onclick="addLibraryItem()">新增</button>
+        </div>
       </div>
       <div id="libraryItems"></div>
       <div id="emptyGroup" style="display:none;padding:24px;text-align:center;color:var(--text3);font-size:13px;">尚未新增品項</div>
@@ -468,7 +476,7 @@ let currentEstimate = {
 let stampDataURL = null;
 
 // units for dropdown
-const COMMON_UNITS = ['m²','m','式','坪','個','組','支','顆','盞','桶','才','噸','次','項'];
+const COMMON_UNITS = ['m²','m³','m','式','坪','個','組','支','顆','盞','桶','才','噸','次','項'];
 
 async function loadGroups() {
   const raw = await dbGet('groups_data');
@@ -603,6 +611,28 @@ function renderGroupTabs() {
   ).join('');
 }
 
+function populateLibUnitSelect() {
+  const sel = document.getElementById('libUnit');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">── 選擇單位 ──</option>` +
+    COMMON_UNITS.map(u => `<option value="${u}">${u}</option>`).join('') +
+    `<option value="__custom__">自訂…</option>`;
+  if (cur) sel.value = cur;
+  sel.onchange = function() {
+    if (this.value === '__custom__') {
+      showModal('自訂單位','','輸入單位名稱', val => {
+        if (!val) { this.value=''; return; }
+        // add temporary option
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val;
+        this.insertBefore(opt, this.lastElementChild);
+        this.value = val;
+      });
+    }
+  };
+}
+
 function renderGroupPanel() {
   const g = activeGroup();
   if (!g) {
@@ -612,6 +642,7 @@ function renderGroupPanel() {
     return;
   }
   document.getElementById('libAddForm').style.display = '';
+  populateLibUnitSelect();
   document.getElementById('groupPanelHeader').innerHTML = `
     <div class="group-name-display">📁 ${esc(g.name)}</div>
     <button class="group-action-btn" onclick="renameGroup(${g.id})" title="重新命名">✏️</button>
@@ -671,13 +702,15 @@ function deleteGroup(id) {
 async function addLibraryItem() {
   const g    = activeGroup();
   const name = document.getElementById('libName').value.trim();
-  const unit = document.getElementById('libUnit').value.trim();
+  const unitSel = document.getElementById('libUnit');
+  const unit = unitSel.value === '__custom__' ? '' : unitSel.value;
   const price= Number(document.getElementById('libPrice').value);
   if (!name) { showToast('❌ 請輸入品項名稱'); return; }
+  if (!unit) { showToast('❌ 請選擇單位'); return; }
   if (!g)    { showToast('❌ 請先選擇群組'); return; }
   g.items.push({ id: Date.now(), name, unit, price });
   document.getElementById('libName').value = '';
-  document.getElementById('libUnit').value = '';
+  unitSel.value = '';
   document.getElementById('libPrice').value= '';
   await saveGroups(); renderGroupPanel(); renderEstimate();
   showToast(`✅ 已新增「${name}」`);
