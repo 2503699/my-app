@@ -144,7 +144,62 @@ textarea#note:focus{border-color:var(--accent);}
   display:flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap;}
 .print-btn:active{background:var(--accent);color:#fff;}
 
-/* ── Stamp section ── */
+/* ── Confirm row (stamp + client signature) ── */
+.confirm-row{
+  display:flex;gap:0;border-top:1px solid var(--border2);
+}
+.confirm-col{
+  flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.confirm-col+.confirm-col{border-left:1px solid var(--border2);}
+.confirm-col-title{
+  font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.06em;
+  display:flex;align-items:center;gap:5px;
+}
+/* signature box */
+.sig-box{
+  border:1.5px solid var(--border);border-radius:8px;
+  min-height:90px;background:var(--card2);
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  padding:8px;position:relative;
+}
+.sig-line{
+  width:100%;border-bottom:1px solid var(--border);
+  position:absolute;bottom:32px;left:0;
+}
+.sig-label{
+  font-size:10px;color:var(--text3);position:absolute;
+  bottom:10px;width:100%;text-align:center;left:0;
+}
+/* stamp box same height */
+.stamp-box{
+  border:1.5px solid var(--border);border-radius:8px;
+  min-height:90px;background:var(--card2);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;
+}
+.stamp-box img{max-width:100%;max-height:90px;object-fit:contain;}
+.stamp-box .no-stamp{font-size:11px;color:var(--text3);text-align:center;}
+/* upload controls – only visible on screen */
+.confirm-upload-row{display:flex;gap:6px;flex-wrap:wrap;}
+.confirm-upload-btn{
+  flex:1;min-width:80px;background:var(--accent-bg);color:var(--accent);
+  border:1px solid var(--accent);border-radius:7px;
+  padding:7px 8px;font-size:12px;font-weight:700;cursor:pointer;
+  text-align:center;transition:.15s;
+}
+.confirm-upload-btn:active{background:var(--accent);color:#fff;}
+.confirm-clear-btn{
+  background:var(--card);color:var(--danger);
+  border:1px solid var(--danger);border-radius:7px;
+  padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;
+}
+/* client name display in sig box */
+.sig-name{
+  font-size:18px;font-weight:900;color:var(--text);
+  position:absolute;bottom:34px;left:0;width:100%;text-align:center;
+  letter-spacing:.05em;
+}
 .stamp-section{padding:12px 14px;border-top:1px solid var(--border2);background:var(--card2);}
 .stamp-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;}
 .stamp-area{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
@@ -253,9 +308,12 @@ textarea#note:focus{border-color:var(--accent);}
   .totals-card{background:#1a2e20 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .excel-table th{background:#1e3f2d !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .excel-table tr:nth-child(even) td{background:#f5f1ec !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .stamp-section{border-top:1px solid #ccc;}
-  /* print layout: show stamp area nicely */
-  .print-stamp-row{display:flex !important;justify-content:flex-end;padding:12px 14px;}
+  .confirm-row{border-top:1px solid #ccc;}
+  .confirm-col{padding:12px 14px;}
+  .confirm-col+.confirm-col{border-left:1px solid #ccc;}
+  .stamp-box{min-height:100px;border:1px solid #ccc;}
+  .sig-box{min-height:100px;border:1px solid #ccc;}
+  .stamp-section{display:none !important;}
 }
 
 /* ── Responsive ── */
@@ -295,7 +353,7 @@ textarea#note:focus{border-color:var(--accent);}
     <div class="info-row no-print">
       <div class="info-field field-client">
         <span class="lbl">客戶</span>
-        <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱">
+        <input id="clientName" oninput="saveCurrentData();syncClientName()" placeholder="客戶或案場名稱">
       </div>
       <div class="info-field field-date">
         <span class="lbl">日期</span>
@@ -345,27 +403,49 @@ textarea#note:focus{border-color:var(--accent);}
       </div>
     </div>
 
-    <!-- Stamp / Company seal -->
+    <!-- Stamp + Client Confirmation -->
     <div class="card">
-      <div class="stamp-section">
-        <div class="stamp-title">🔖 公司印章／落款</div>
-        <div class="stamp-area">
-          <div class="stamp-preview" id="stampPreview">
-            <div class="stamp-placeholder" id="stampPlaceholder">尚未上傳<br>印章圖片</div>
-            <img id="stampImg" src="" alt="公司印章" style="display:none;">
-          </div>
-          <div class="stamp-btns">
-            <button class="stamp-upload-btn" onclick="document.getElementById('stampFile').click()">
-              📁 上傳印章（JPG/PNG）
-            </button>
-            <button class="stamp-clear-btn" onclick="clearStamp()">✕ 移除印章</button>
-            <div class="stamp-info">
-              支援 JPG、PNG 格式<br>建議尺寸：300×300 px 以上
-            </div>
-          </div>
+
+      <!-- ── screen-only controls (no-print) ── -->
+      <div class="stamp-section no-print">
+        <div class="stamp-title">🔖 公司印章 ＆ 客戶確認欄</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">
+          列印後客戶可在右側「客戶確認」欄手寫簽名，或拍照回傳。
         </div>
+        <div class="confirm-upload-row">
+          <button class="confirm-upload-btn" onclick="document.getElementById('stampFile').click()">
+            📁 上傳印章（JPG/PNG）
+          </button>
+          <button class="confirm-clear-btn" onclick="clearStamp()">✕ 移除</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">支援 JPG、PNG｜建議 300×300 px 以上</div>
         <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="loadStamp(event)">
       </div>
+
+      <!-- ── printed confirm row ── -->
+      <div class="confirm-row">
+        <!-- LEFT: company stamp -->
+        <div class="confirm-col">
+          <div class="confirm-col-title">🏢 廠商蓋章</div>
+          <div class="stamp-box" id="stampBox">
+            <div class="no-stamp" id="stampPlaceholder">（蓋章處）</div>
+            <img id="stampImg" src="" alt="公司印章" style="display:none;">
+          </div>
+        </div>
+        <!-- RIGHT: client signature -->
+        <div class="confirm-col">
+          <div class="confirm-col-title">✍️ 客戶確認簽名</div>
+          <div class="sig-box">
+            <div class="sig-line"></div>
+            <span class="sig-name" id="sigClientName"></span>
+            <span class="sig-label">客戶簽名／日期</span>
+          </div>
+          <div class="no-print" style="font-size:11px;color:var(--text3);">
+            客戶名稱來自上方「客戶」欄位
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /view-estimate -->
@@ -540,6 +620,7 @@ async function init() {
 
   // restore fields
   document.getElementById('clientName').value = currentEstimate.clientName || '';
+  syncClientName();
   document.getElementById('quoteDate').value  = currentEstimate.quoteDate  || new Date().toISOString().split('T')[0];
   document.getElementById('taxRate').value    = currentEstimate.taxRate ?? 5;
   document.getElementById('note').value       = currentEstimate.note || '';
@@ -585,11 +666,17 @@ function applyStamp() {
   if (stampDataURL) {
     img.src = stampDataURL;
     img.style.display = '';
-    ph.style.display  = 'none';
+    if (ph) ph.style.display = 'none';
   } else {
     img.style.display = 'none';
-    ph.style.display  = '';
+    if (ph) ph.style.display = '';
   }
+}
+
+function syncClientName() {
+  const name = document.getElementById('clientName')?.value || '';
+  const el = document.getElementById('sigClientName');
+  if (el) el.textContent = name;
 }
 async function clearStamp() {
   stampDataURL = null;
