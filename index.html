@@ -1,1235 +1,925 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>估價系統</title>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>估價系統</title>
+<style>
+:root {
+  --bg:#F2EDE6; --card:#FDFAF6; --card2:#F8F4EE;
+  --border:#DDD6CC; --border2:#EAE4DB;
+  --text:#1E1A14; --text2:#7A6F62; --text3:#B0A898;
+  --accent:#3E7D5A; --accent-bg:#EBF3EE; --accent-dk:#2D5E43;
+  --num:#2E6B8A; --danger:#C0392B;
+  --shadow:0 1px 3px rgba(0,0,0,.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;padding:10px 10px 60px;
+  -webkit-tap-highlight-color:transparent;
+}
+input,textarea,select{font-family:inherit;font-size:15px;color:var(--text);}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+button{touch-action:manipulation;}
 
-    <style>
-        /* ── 顏色變數（護眼暖色系）─────────────────── */
-        :root {
-            --bg:        #F2EDE6;   /* 頁面背景：暖米色 */
-            --card:      #FDFAF6;   /* 卡片：乳白 */
-            --card2:     #F8F4EE;   /* 次要卡片 */
-            --border:    #DDD6CC;   /* 邊框：暖灰 */
-            --border2:   #EAE4DB;   /* 淡邊框 */
-            --text:      #1E1A14;   /* 主文字：深暖褐 */
-            --text2:     #7A6F62;   /* 次文字：中灰棕 */
-            --text3:     #B0A898;   /* 淡文字 */
-            --accent:    #3E7D5A;   /* 強調：森林綠 */
-            --accent-bg: #EBF3EE;   /* 強調背景 */
-            --accent-dk: #2D5E43;   /* 深綠 */
-            --num:       #2E6B8A;   /* 數字：鋼藍（護眼）*/
-            --danger:    #C0392B;
-            --shadow:    0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
-        }
+/* ── App ── */
+#app{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
 
-        /* ── 基礎 ──────────────────────────────────── */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { font-size: 15px; }
-        body {
-            font-family: 'Noto Sans TC', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 10px 10px 30px;
-            -webkit-tap-highlight-color: transparent;
-            line-height: 1.4;
-        }
-        input, textarea, select { font-family: inherit; font-size: 15px; color: var(--text); }
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+/* ── Nav ── */
+nav{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  display:flex;box-shadow:var(--shadow);overflow:hidden;}
+.tab-btn{flex:1;padding:12px 8px;font-size:13px;font-weight:700;color:var(--text2);
+  background:transparent;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;}
+.tab-btn.active{background:var(--accent-bg);color:var(--accent);}
+.tab-divider{width:1px;background:var(--border);flex-shrink:0;}
 
-        /* ── 佈局容器 ──────────────────────────────── */
-        #app { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+/* ── Card ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow);overflow:hidden;}
 
-        /* ── 頂部導覽列 ─────────────────────────────── */
-        nav {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            display: flex;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 11px 8px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text2);
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: background .15s, color .15s;
-        }
-        .tab-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-        .tab-btn.active {
-            background: var(--accent-bg);
-            color: var(--accent);
-        }
-        .tab-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+/* ── Info row ── */
+.info-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;}
+.info-field{display:flex;align-items:center;gap:7px;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;padding:9px 11px;
+  box-shadow:var(--shadow);}
+.info-field input,.info-field select{border:none;outline:none;background:transparent;
+  font-weight:700;width:100%;}
+.info-field input::placeholder{color:var(--text3);font-weight:400;}
+.info-field .lbl{font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;}
+.field-client{flex:1;min-width:160px;}
+.field-date{width:160px;}
+.field-tax{width:100px;flex-shrink:0;}
 
-        /* ── 卡片 ──────────────────────────────────── */
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .card-inner { padding: 10px 12px; }
+/* ═══════════════════════════════════════
+   EXCEL-STYLE TABLE
+═══════════════════════════════════════ */
+.excel-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.excel-table{width:100%;border-collapse:collapse;min-width:520px;font-size:13px;}
+.excel-table th{
+  background:#2D5E43;color:#fff;padding:8px 6px;text-align:center;
+  font-weight:700;font-size:12px;border:1px solid #1e3f2d;white-space:nowrap;}
+.excel-table td{
+  border:1px solid var(--border);padding:0;vertical-align:middle;
+  background:var(--card);}
+.excel-table tr:nth-child(even) td{background:#F5F1EC;}
+.excel-table tr:hover td{background:#EDF5F0;}
 
-        /* ── 頭部資訊列（客戶＋稅率）─────────────────── */
-        .info-row {
-            display: flex;
-            gap: 8px;
-            align-items: stretch;
-        }
-        .info-field {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 9px 11px;
-            box-shadow: var(--shadow);
-        }
-        .info-field svg { width: 15px; height: 15px; color: var(--text3); flex-shrink: 0; }
-        .info-field input {
-            border: none;
-            outline: none;
-            background: transparent;
-            font-weight: 700;
-            width: 100%;
-        }
-        .info-field input::placeholder { color: var(--text3); font-weight: 400; }
-        .info-field .label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text2);
-            white-space: nowrap;
-        }
-        .field-client { flex: 1; }
-        .field-tax { width: 110px; flex-shrink: 0; }
+/* cell inputs */
+.cell-in{
+  width:100%;height:100%;border:none;outline:none;background:transparent;
+  padding:7px 6px;font-size:13px;color:var(--text);text-align:inherit;}
+.cell-in::placeholder{color:var(--text3);}
+.cell-in:focus{background:#FFFDE7;box-shadow:inset 0 0 0 2px #3E7D5A;}
+.cell-num{text-align:right;color:var(--num);font-weight:700;}
+.cell-center{text-align:center;}
+.cell-subtotal{text-align:right;font-weight:900;padding:7px 6px;color:var(--text);
+  font-variant-numeric:tabular-nums;}
 
-        /* ── 報價品項表格 ───────────────────────────── */
-        .table-header {
-            display: grid;
-            grid-template-columns: 1fr 52px 70px 90px 68px;
-            background: var(--card2);
-            border-bottom: 1px solid var(--border2);
-            padding: 7px 10px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text3);
-            letter-spacing: .04em;
-        }
-        .th-unit   { text-align: center; }
-        .th-price  { text-align: right; }
-        .th-qty    { text-align: center; }
-        .th-sub    { text-align: right; }
+/* qty control inside cell */
+.qty-wrap{display:flex;align-items:center;justify-content:center;gap:0;}
+.qty-btn{background:none;border:none;cursor:pointer;color:var(--accent);
+  padding:5px 8px;font-size:18px;font-weight:900;line-height:1;transition:.1s;}
+.qty-btn:active{background:var(--accent-bg);}
+.qty-in{width:36px;text-align:center;border:none;outline:none;background:transparent;
+  font-weight:900;font-size:14px;color:var(--text);}
 
-        /* ── 單個品項列 ─────────────────────────────── */
-        .item-row {
-            border-bottom: 1px solid var(--border2);
-            padding: 8px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .item-row:last-child { border-bottom: none; }
-        .item-top {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .item-name-input {
-            flex: 1;
-            border: none;
-            outline: none;
-            background: var(--card2);
-            border-radius: 7px;
-            padding: 7px 9px;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text);
-            border: 1px solid transparent;
-            transition: border-color .15s;
-        }
-        .item-name-input:focus {
-            border-color: var(--accent);
-            background: #FFF;
-        }
-        .item-name-input::placeholder { color: var(--text3); font-weight: 400; font-size: 13px; }
+/* dropdown select cell */
+.cell-select{
+  width:100%;border:none;outline:none;background:transparent;
+  padding:7px 4px;font-size:13px;color:var(--text);cursor:pointer;
+  -webkit-appearance:none;appearance:none;text-align:center;}
+.cell-select:focus{background:#FFFDE7;}
+.select-wrap{position:relative;}
+.select-wrap::after{
+  content:'▾';position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--text3);pointer-events:none;}
 
-        .item-bottom {
-            display: grid;
-            grid-template-columns: 52px 1fr 90px 1fr;
-            align-items: center;
-            gap: 4px;
-        }
-        .item-unit-input {
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: 12px;
-            color: var(--text2);
-            text-align: center;
-            width: 100%;
-            padding: 4px 0;
-            border-bottom: 1px dashed var(--border);
-        }
-        .item-unit-input::placeholder { color: var(--text3); }
-        .item-price-input {
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--num);
-            text-align: right;
-            width: 100%;
-            padding: 4px 2px;
-            border-bottom: 1px dashed var(--border);
-        }
-        .qty-ctrl {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            background: var(--card2);
-            border-radius: 8px;
-            border: 1px solid var(--border2);
-            padding: 2px 3px;
-        }
-        .qty-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--accent);
-            padding: 3px;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            transition: background .1s;
-        }
-        .qty-btn:active { background: var(--accent-bg); }
-        .qty-btn svg { width: 15px; height: 15px; }
-        .qty-input {
-            width: 30px;
-            text-align: center;
-            border: none;
-            outline: none;
-            background: transparent;
-            font-weight: 900;
-            font-size: 14px;
-            color: var(--text);
-        }
-        .item-subtotal {
-            font-weight: 900;
-            font-size: 14px;
-            color: var(--text);
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-        .del-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text3);
-            padding: 6px;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            transition: color .15s, background .15s;
-        }
-        .del-btn:active { color: var(--danger); background: #FFF0EE; }
-        .del-btn svg { width: 15px; height: 15px; }
+/* action col */
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);
+  padding:6px 8px;font-size:18px;line-height:1;transition:.15s;display:block;
+  width:100%;text-align:center;}
+.del-btn:active{color:var(--danger);}
 
-        /* ── 新增品項按鈕 ─────────────────────────── */
-        .add-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-            padding: 10px;
-            background: var(--card2);
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--accent);
-            border-top: 1px dashed var(--border);
-            transition: background .15s;
-        }
-        .add-btn:active { background: var(--accent-bg); }
-        .add-btn svg { width: 16px; height: 16px; }
+/* add row btn */
+.add-row-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:10px;background:var(--card2);border:none;cursor:pointer;
+  font-size:13px;font-weight:700;color:var(--accent);
+  border-top:1px dashed var(--border);transition:.15s;}
+.add-row-btn:active{background:var(--accent-bg);}
 
-        /* ── 合計卡片 ──────────────────────────────── */
-        .totals-card {
-            background: #263C30;
-            border-radius: 12px;
-            padding: 12px 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.15);
-        }
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 3px 0;
-            font-size: 13px;
-            color: rgba(255,255,255,.55);
-        }
-        .total-divider {
-            height: 1px;
-            background: rgba(255,255,255,.1);
-            margin: 6px 0;
-        }
-        .total-grand {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-        }
-        .total-grand-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: rgba(255,255,255,.55);
-        }
-        .total-grand-amount {
-            font-size: 26px;
-            font-weight: 900;
-            color: #7DD8A8;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -.5px;
-        }
+/* ── Totals ── */
+.totals-card{background:#263C30;border-radius:12px;padding:12px 14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.total-row{display:flex;justify-content:space-between;align-items:center;
+  padding:3px 0;font-size:13px;color:rgba(255,255,255,.55);}
+.total-divider{height:1px;background:rgba(255,255,255,.1);margin:6px 0;}
+.total-grand{display:flex;justify-content:space-between;align-items:baseline;}
+.total-grand-label{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);}
+.total-grand-amount{font-size:26px;font-weight:900;color:#7DD8A8;
+  font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
 
-        /* ── 備註框 ───────────────────────────────── */
-        .note-wrap { display: flex; flex-direction: column; gap: 4px; }
-        .note-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .05em; padding-left: 2px; }
-        textarea#note {
-            width: 100%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            outline: none;
-            font-size: 13px;
-            color: var(--text);
-            resize: vertical;
-            box-shadow: var(--shadow);
-            transition: border-color .15s;
-            min-height: 70px;
-        }
-        textarea#note:focus { border-color: var(--accent); }
-        textarea#note::placeholder { color: var(--text3); }
+/* ── Note ── */
+.note-wrap{display:flex;flex-direction:column;gap:4px;}
+.note-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.05em;padding-left:2px;}
+textarea#note{width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;outline:none;font-size:13px;color:var(--text);
+  resize:vertical;box-shadow:var(--shadow);transition:border-color .15s;min-height:70px;}
+textarea#note:focus{border-color:var(--accent);}
 
-        /* ── 列印按鈕 ─────────────────────────────── */
-        .print-btn {
-            background: var(--accent-bg);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            border-radius: 9px;
-            padding: 8px 12px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background .15s;
-            white-space: nowrap;
-        }
-        .print-btn:active { background: var(--accent); color: #fff; }
-        .print-btn svg { width: 14px; height: 14px; }
+/* ── Print btn ── */
+.header-row{display:flex;align-items:center;justify-content:space-between;padding:4px 2px;}
+.header-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;}
+.header-icon{background:var(--accent);color:#fff;border-radius:8px;padding:5px;display:flex;}
+.print-btn{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);
+  border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap;}
+.print-btn:active{background:var(--accent);color:#fff;}
 
-        /* ── 品項庫管理 ─────────────────────────────── */
-        .manage-header {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border2);
-            background: var(--card2);
-        }
-        .manage-header h2 { font-size: 15px; font-weight: 900; color: var(--text); }
-        .manage-header p  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* ── Stamp section ── */
+.stamp-section{padding:12px 14px;border-top:1px solid var(--border2);background:var(--card2);}
+.stamp-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;}
+.stamp-area{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.stamp-preview{width:100px;height:100px;border:2px dashed var(--border);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+  background:var(--card);}
+.stamp-preview img{width:100%;height:100%;object-fit:contain;}
+.stamp-placeholder{font-size:11px;color:var(--text3);text-align:center;padding:8px;}
+.stamp-btns{display:flex;flex-direction:column;gap:6px;}
+.stamp-upload-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;
+  padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+.stamp-upload-btn:active{background:var(--accent-dk);}
+.stamp-clear-btn{background:var(--card);color:var(--danger);border:1px solid var(--danger);
+  border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+.stamp-info{font-size:11px;color:var(--text3);line-height:1.5;}
 
-        .lib-add-form {
-            padding: 10px 12px;
-            display: grid;
-            grid-template-columns: 1fr 60px 80px auto;
-            gap: 6px;
-            border-bottom: 1px solid var(--border2);
-            background: var(--card);
-        }
-        .lib-input {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 13px;
-            background: var(--card2);
-            outline: none;
-            transition: border-color .15s;
-        }
-        .lib-input:focus { border-color: var(--accent); background: #fff; }
-        .lib-input::placeholder { color: var(--text3); }
-        .lib-add-submit {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background .15s;
-        }
-        .lib-add-submit:active { background: var(--accent-dk); }
+/* ── Library manage ── */
+.manage-header{padding:12px 14px;border-bottom:1px solid var(--border2);background:var(--card2);}
+.manage-header h2{font-size:15px;font-weight:900;}
+.manage-header p{font-size:12px;color:var(--text2);margin-top:2px;}
+.lib-add-form{padding:10px 12px;display:grid;
+  grid-template-columns:1fr 60px 80px auto;gap:6px;
+  border-bottom:1px solid var(--border2);background:var(--card);}
+.lib-input{border:1px solid var(--border);border-radius:8px;padding:8px 10px;
+  font-size:13px;background:var(--card2);outline:none;transition:.15s;}
+.lib-input:focus{border-color:var(--accent);background:#fff;}
+.lib-add-submit{background:var(--accent);color:#fff;border:none;border-radius:8px;
+  padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.lib-add-submit:active{background:var(--accent-dk);}
+.lib-item{display:flex;align-items:center;padding:10px 14px;
+  border-bottom:1px solid var(--border2);gap:10px;}
+.lib-item:last-child{border-bottom:none;}
+.lib-item-info{flex:1;}
+.lib-item-name{font-weight:700;font-size:14px;}
+.lib-item-meta{font-size:12px;color:var(--text2);margin-top:1px;}
+.lib-del-btn{background:none;border:none;cursor:pointer;color:var(--text3);
+  padding:6px;border-radius:7px;font-size:18px;transition:.15s;}
+.lib-del-btn:active{color:var(--danger);}
 
-        .lib-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border2);
-            gap: 10px;
-            transition: background .1s;
-        }
-        .lib-item:last-child { border-bottom: none; }
-        .lib-item:active { background: var(--card2); }
-        .lib-item-info { flex: 1; }
-        .lib-item-name { font-weight: 700; font-size: 14px; color: var(--text); }
-        .lib-item-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
-        .lib-del-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text3);
-            padding: 6px;
-            border-radius: 7px;
-            transition: color .15s;
-        }
-        .lib-del-btn:active { color: var(--danger); }
-        .lib-del-btn svg { width: 15px; height: 15px; }
+/* ── Group tabs ── */
+.group-tabs-wrap{display:flex;align-items:stretch;overflow:hidden;}
+.group-tabs{display:flex;overflow-x:auto;flex:1;scrollbar-width:none;}
+.group-tabs::-webkit-scrollbar{display:none;}
+.group-tab{flex-shrink:0;padding:11px 14px;font-size:13px;font-weight:700;
+  color:var(--text2);background:transparent;border:none;
+  border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:.15s;}
+.group-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-bg);}
+.group-add-btn{flex-shrink:0;display:flex;align-items:center;gap:4px;
+  padding:10px 12px;font-size:12px;font-weight:700;color:var(--accent);
+  background:var(--accent-bg);border:none;border-left:1px solid var(--border2);
+  cursor:pointer;white-space:nowrap;}
+.group-panel-header{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  background:var(--card2);border-bottom:1px solid var(--border2);}
+.group-name-display{flex:1;font-size:14px;font-weight:900;}
+.group-action-btn{background:none;border:none;cursor:pointer;padding:5px;
+  border-radius:6px;color:var(--text3);display:flex;align-items:center;transition:.15s;}
+.group-action-btn:active{color:var(--text);background:var(--border2);}
+.group-action-btn.danger:active{color:var(--danger);}
 
-        /* ── Header row (title + print) ─────────────── */
-        .header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px 2px;
-        }
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 15px;
-            font-weight: 900;
-            color: var(--text);
-        }
-        .header-icon {
-            background: var(--accent);
-            color: #fff;
-            border-radius: 8px;
-            padding: 5px;
-            display: flex;
-        }
-        .header-icon svg { width: 14px; height: 14px; }
+/* ── Backup ── */
+.backup-section{padding:12px 14px;border-top:1px solid var(--border2);background:var(--card2);
+  display:flex;flex-direction:column;gap:8px;}
+.backup-title{font-size:12px;font-weight:700;color:var(--text2);}
+.backup-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.backup-btn{display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 8px;border-radius:9px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:.15s;}
+.backup-btn:active{opacity:.8;}
+.btn-export{background:var(--accent);color:#fff;}
+.btn-import{background:var(--card);color:var(--accent);border:1.5px solid var(--accent);}
+.backup-info{font-size:11px;color:var(--text3);text-align:center;line-height:1.5;}
 
-        /* ── 備份區塊 ─────────────────────────────── */
-        .backup-section {
-            padding: 12px 14px;
-            border-top: 1px solid var(--border2);
-            background: var(--card2);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .backup-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text2);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .backup-title svg { width: 13px; height: 13px; color: var(--text3); }
-        .backup-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 7px;
-        }
-        .backup-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 8px;
-            border-radius: 9px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            transition: opacity .15s, transform .1s;
-        }
-        .backup-btn:active { opacity: .8; transform: scale(.97); }
-        .backup-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-        .btn-export {
-            background: var(--accent);
-            color: #fff;
-        }
-        .btn-import {
-            background: var(--card);
-            color: var(--accent);
-            border: 1.5px solid var(--accent);
-        }
-        .backup-info {
-            font-size: 11px;
-            color: var(--text3);
-            text-align: center;
-            line-height: 1.5;
-        }
-        .backup-info strong { color: var(--text2); }
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;z-index:900;padding:20px;}
+.modal-box{background:var(--card);border-radius:16px;padding:20px;
+  width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2);
+  display:flex;flex-direction:column;gap:12px;}
+.modal-title{font-size:15px;font-weight:900;}
+.modal-input{border:1.5px solid var(--border);border-radius:9px;
+  padding:10px 12px;font-size:14px;background:var(--card2);outline:none;width:100%;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;}
+.modal-btn{flex:1;padding:10px;border-radius:9px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;}
+.modal-btn-cancel{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
+.modal-btn-ok{background:var(--accent);color:#fff;}
 
-        /* ── toast 提示 ──────────────────────────── */
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background: #263C30;
-            color: #7DD8A8;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 10px 20px;
-            border-radius: 30px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .25s, transform .25s;
-            white-space: nowrap;
-            z-index: 999;
-            box-shadow: 0 4px 16px rgba(0,0,0,.2);
-        }
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:#263C30;color:#7DD8A8;font-size:13px;font-weight:700;
+  padding:10px 20px;border-radius:30px;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;white-space:nowrap;z-index:999;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-        /* ── 群組頁籤 ─────────────────────────────── */
-        .group-tabs-wrap {
-            display: flex;
-            align-items: stretch;
-            overflow: hidden;
-        }
-        .group-tabs {
-            display: flex;
-            overflow-x: auto;
-            flex: 1;
-            scrollbar-width: none;
-        }
-        .group-tabs::-webkit-scrollbar { display: none; }
-        .group-tab {
-            flex-shrink: 0;
-            padding: 11px 14px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text2);
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: color .15s, border-color .15s, background .15s;
-        }
-        .group-tab.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-            background: var(--accent-bg);
-        }
-        .group-add-btn {
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 10px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--accent);
-            background: var(--accent-bg);
-            border: none;
-            border-left: 1px solid var(--border2);
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background .15s;
-        }
-        .group-add-btn:active { background: #d5ead9; }
-        .group-add-btn svg { width: 13px; height: 13px; }
+/* ═══════════════════════════════════════
+   PRINT STYLES
+═══════════════════════════════════════ */
+@media print {
+  .no-print{display:none !important;}
+  body{background:#fff;padding:0;}
+  #app{max-width:100%;}
+  .card{box-shadow:none;border:1px solid #ccc;}
+  .totals-card{background:#1a2e20 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .excel-table th{background:#1e3f2d !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .excel-table tr:nth-child(even) td{background:#f5f1ec !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .stamp-section{border-top:1px solid #ccc;}
+  /* print layout: show stamp area nicely */
+  .print-stamp-row{display:flex !important;justify-content:flex-end;padding:12px 14px;}
+}
 
-        /* ── 群組標題列 ───────────────────────────── */
-        .group-panel-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            background: var(--card2);
-            border-bottom: 1px solid var(--border2);
-        }
-        .group-name-display {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 900;
-            color: var(--text);
-        }
-        .group-action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 6px;
-            color: var(--text3);
-            display: flex;
-            align-items: center;
-            transition: color .15s, background .15s;
-        }
-        .group-action-btn:active { color: var(--text); background: var(--border2); }
-        .group-action-btn.danger:active { color: var(--danger); }
-        .group-action-btn svg { width: 15px; height: 15px; }
-
-        /* ── 自訂對話框 ──────────────────────────── */
-        .modal-overlay {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,.45);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 900;
-            padding: 20px;
-        }
-        .modal-box {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            width: 100%;
-            max-width: 320px;
-            box-shadow: 0 8px 32px rgba(0,0,0,.2);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .modal-title {
-            font-size: 15px;
-            font-weight: 900;
-            color: var(--text);
-        }
-        .modal-input {
-            border: 1.5px solid var(--border);
-            border-radius: 9px;
-            padding: 10px 12px;
-            font-size: 14px;
-            color: var(--text);
-            background: var(--card2);
-            outline: none;
-            width: 100%;
-            transition: border-color .15s;
-        }
-        .modal-input:focus { border-color: var(--accent); background: #fff; }
-        .modal-btns { display: flex; gap: 8px; }
-        .modal-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 9px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            transition: opacity .15s;
-        }
-        .modal-btn:active { opacity: .8; }
-        .modal-btn-cancel { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
-        .modal-btn-ok     { background: var(--accent); color: #fff; }
-
-        /* ── 列印樣式 ─────────────────────────────── */
-        @media print {
-            .no-print { display: none !important; }
-            body { background: #fff; padding: 0; }
-            .card { box-shadow: none; border: 1px solid #ccc; }
-            .totals-card { background: #1a1a1a; }
-        }
-
-        /* ── 桌面版補強 ────────────────────────────── */
-        @media (min-width: 560px) {
-            body { padding: 16px 16px 40px; }
-            #app { gap: 10px; }
-            .table-header {
-                grid-template-columns: 1fr 60px 80px 100px 72px;
-            }
-            .item-bottom {
-                grid-template-columns: 60px 1fr 100px 1fr;
-            }
-            .lib-add-form {
-                grid-template-columns: 1fr 70px 90px auto;
-            }
-        }
-    </style>
+/* ── Responsive ── */
+@media(min-width:560px){
+  body{padding:16px 16px 60px;}
+  #app{gap:10px;}
+  .lib-add-form{grid-template-columns:1fr 70px 90px auto;}
+}
+</style>
 </head>
 <body>
-
 <div id="app">
 
-    <!-- ── 導覽列 ── -->
-    <nav class="no-print">
-        <button class="tab-btn active" id="tab-estimate" onclick="switchView('estimate')">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z"/><path d="M14 2v6h6"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
-            製作報價單
-        </button>
-        <div class="tab-divider"></div>
-        <button class="tab-btn" id="tab-manage" onclick="switchView('manage')">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
-            管理品項庫
-        </button>
-    </nav>
+  <!-- NAV -->
+  <nav class="no-print">
+    <button class="tab-btn active" id="tab-estimate" onclick="switchView('estimate')">
+      📋 製作報價單
+    </button>
+    <div class="tab-divider"></div>
+    <button class="tab-btn" id="tab-manage" onclick="switchView('manage')">
+      🗄️ 管理品項庫
+    </button>
+  </nav>
 
-    <!-- ═══════════════ 報價單頁面 ═══════════════ -->
-    <div id="view-estimate">
+  <!-- ═══ 報價單頁面 ═══ -->
+  <div id="view-estimate">
 
-        <!-- 標題列 -->
-        <div class="header-row no-print">
-            <div class="header-title">
-                <div class="header-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="12" r="1" fill="currentColor"/><circle cx="16" cy="10" r="1" fill="currentColor"/></svg>
-                </div>
-                報價單編輯器
-            </div>
-            <button class="print-btn" onclick="window.print()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-                列印/PDF
-            </button>
-        </div>
-
-        <!-- 客戶名稱 + 稅率 -->
-        <div class="info-row no-print">
-            <div class="info-field field-client">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱">
-            </div>
-            <div class="info-field field-tax">
-                <span class="label">稅率%</span>
-                <input id="taxRate" type="number" value="5" oninput="updateTotals()" style="text-align:right; width:100%">
-            </div>
-        </div>
-
-        <!-- 品項表格 -->
-        <div class="card">
-            <div class="table-header no-print">
-                <span>品項名稱</span>
-                <span class="th-unit">單位</span>
-                <span class="th-price">單價</span>
-                <span class="th-qty">數量</span>
-                <span class="th-sub">小計</span>
-            </div>
-            <div id="estimateItems"></div>
-            <button class="add-btn no-print" onclick="addEstimateItem()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                新增品項
-            </button>
-        </div>
-
-        <!-- 合計 + 備註 -->
-        <div style="display:flex; flex-direction:column; gap:8px;">
-            <div class="totals-card">
-                <div class="total-row">
-                    <span>合計金額</span>
-                    <span id="subtotalDisplay">$0</span>
-                </div>
-                <div class="total-row">
-                    <span>稅額</span>
-                    <span id="taxDisplay">$0</span>
-                </div>
-                <div class="total-divider"></div>
-                <div class="total-grand">
-                    <span class="total-grand-label">應付總額</span>
-                    <span class="total-grand-amount" id="grandTotalDisplay">$0</span>
-                </div>
-            </div>
-
-            <div class="note-wrap no-print">
-                <span class="note-label">備註事項</span>
-                <textarea id="note" oninput="saveCurrentData()" rows="3" placeholder="付款說明、備注…"></textarea>
-            </div>
-        </div>
-
-    </div><!-- /view-estimate -->
-
-
-    <!-- ═══════════════ 品項庫頁面 ═══════════════ -->
-    <div id="view-manage" style="display:none; display:none; flex-direction:column; gap:8px;">
-
-        <!-- 群組頁籤列 -->
-        <div class="card" style="overflow:hidden;">
-            <div class="group-tabs-wrap">
-                <div id="groupTabs" class="group-tabs"></div>
-                <button class="group-add-btn" onclick="addGroup()" title="新增群組">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    新增群組
-                </button>
-            </div>
-        </div>
-
-        <!-- 當前群組內容 -->
-        <div class="card" id="groupPanel">
-            <!-- 群組標題列（含重新命名＋刪除群組） -->
-            <div class="group-panel-header" id="groupPanelHeader"></div>
-            <!-- 新增品項表單 -->
-            <div class="lib-add-form" id="libAddForm">
-                <input id="libName" class="lib-input" placeholder="品項名稱">
-                <input id="libUnit" class="lib-input" placeholder="單位">
-                <input id="libPrice" type="number" class="lib-input" placeholder="單價">
-                <button class="lib-add-submit" onclick="addLibraryItem()">新增</button>
-            </div>
-            <div id="libraryItems"></div>
-            <div id="emptyGroup" style="display:none; padding:24px; text-align:center; color:var(--text3); font-size:13px;">尚未新增品項</div>
-        </div>
-
-        <!-- 備份區塊 -->
-        <div class="card">
-            <div class="backup-section">
-                <div class="backup-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 8v4l3 3"/></svg>
-                    資料備份與還原
-                </div>
-                <div class="backup-btns">
-                    <button class="backup-btn btn-export" onclick="exportData()">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        匯出備份
-                    </button>
-                    <button class="backup-btn btn-import" onclick="document.getElementById('importFile').click()">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        匯入還原
-                    </button>
-                </div>
-                <div class="backup-info">
-                    上次備份：<strong id="lastBackupTime">尚未備份</strong><br>
-                    ⚠️ 建議每次新增品項後備份一次，換機前也要備份
-                </div>
-                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-            </div>
-        </div>
+    <!-- Header -->
+    <div class="header-row no-print">
+      <div class="header-title">
+        <div class="header-icon">📄</div>
+        報價單編輯器
+      </div>
+      <button class="print-btn" onclick="window.print()">🖨️ 列印/PDF</button>
     </div>
+
+    <!-- Info row -->
+    <div class="info-row no-print">
+      <div class="info-field field-client">
+        <span class="lbl">客戶</span>
+        <input id="clientName" oninput="saveCurrentData()" placeholder="客戶或案場名稱">
+      </div>
+      <div class="info-field field-date">
+        <span class="lbl">日期</span>
+        <input id="quoteDate" type="date" oninput="saveCurrentData()">
+      </div>
+      <div class="info-field field-tax">
+        <span class="lbl">稅率%</span>
+        <input id="taxRate" type="number" value="5" oninput="updateTotals()" style="text-align:right;width:100%">
+      </div>
+    </div>
+
+    <!-- Excel-style table -->
+    <div class="card">
+      <div class="excel-wrap">
+        <table class="excel-table">
+          <thead>
+            <tr>
+              <th style="width:28px">項次</th>
+              <th style="min-width:140px">施工內容／品項名稱</th>
+              <th style="width:70px">單位</th>
+              <th style="width:90px">單價</th>
+              <th style="width:100px">數量</th>
+              <th style="width:90px">金額</th>
+              <th style="width:36px" class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="estimateItems"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn no-print" onclick="addEstimateItem()">＋ 新增品項</button>
+    </div>
+
+    <!-- Totals -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="totals-card">
+        <div class="total-row"><span>合計金額</span><span id="subtotalDisplay">$0</span></div>
+        <div class="total-row"><span>稅額</span><span id="taxDisplay">$0</span></div>
+        <div class="total-divider"></div>
+        <div class="total-grand">
+          <span class="total-grand-label">應付總額</span>
+          <span class="total-grand-amount" id="grandTotalDisplay">$0</span>
+        </div>
+      </div>
+      <div class="note-wrap no-print">
+        <span class="note-label">備註事項</span>
+        <textarea id="note" oninput="saveCurrentData()" rows="3" placeholder="付款說明、備注…"></textarea>
+      </div>
+    </div>
+
+    <!-- Stamp / Company seal -->
+    <div class="card">
+      <div class="stamp-section">
+        <div class="stamp-title">🔖 公司印章／落款</div>
+        <div class="stamp-area">
+          <div class="stamp-preview" id="stampPreview">
+            <div class="stamp-placeholder" id="stampPlaceholder">尚未上傳<br>印章圖片</div>
+            <img id="stampImg" src="" alt="公司印章" style="display:none;">
+          </div>
+          <div class="stamp-btns">
+            <button class="stamp-upload-btn" onclick="document.getElementById('stampFile').click()">
+              📁 上傳印章（JPG/PNG）
+            </button>
+            <button class="stamp-clear-btn" onclick="clearStamp()">✕ 移除印章</button>
+            <div class="stamp-info">
+              支援 JPG、PNG 格式<br>建議尺寸：300×300 px 以上
+            </div>
+          </div>
+        </div>
+        <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="loadStamp(event)">
+      </div>
+    </div>
+
+  </div><!-- /view-estimate -->
+
+
+  <!-- ═══ 品項庫頁面 ═══ -->
+  <div id="view-manage" style="display:none;flex-direction:column;gap:8px;">
+
+    <!-- Group tabs -->
+    <div class="card" style="overflow:hidden;">
+      <div class="group-tabs-wrap">
+        <div id="groupTabs" class="group-tabs"></div>
+        <button class="group-add-btn no-print" onclick="addGroup()">＋ 新增群組</button>
+      </div>
+    </div>
+
+    <!-- Group panel -->
+    <div class="card" id="groupPanel">
+      <div class="group-panel-header" id="groupPanelHeader"></div>
+      <div class="lib-add-form" id="libAddForm">
+        <input id="libName" class="lib-input" placeholder="品項名稱">
+        <input id="libUnit" class="lib-input" placeholder="單位">
+        <input id="libPrice" type="number" class="lib-input" placeholder="單價">
+        <button class="lib-add-submit" onclick="addLibraryItem()">新增</button>
+      </div>
+      <div id="libraryItems"></div>
+      <div id="emptyGroup" style="display:none;padding:24px;text-align:center;color:var(--text3);font-size:13px;">尚未新增品項</div>
+    </div>
+
+    <!-- Backup -->
+    <div class="card">
+      <div class="backup-section">
+        <div class="backup-title">💾 資料備份與還原</div>
+        <div class="backup-btns">
+          <button class="backup-btn btn-export" onclick="exportData()">⬇ 匯出備份</button>
+          <button class="backup-btn btn-import" onclick="document.getElementById('importFile').click()">⬆ 匯入還原</button>
+        </div>
+        <div class="backup-info">
+          上次備份：<strong id="lastBackupTime">尚未備份</strong><br>
+          ⚠️ 建議每次新增品項後備份一次
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+
+  </div><!-- /view-manage -->
 
 </div><!-- /app -->
 
 <div id="toast"></div>
 
-<!-- datalist 建在全域，方便報價單使用 -->
-<datalist id="lib-options"></datalist>
-
 <script>
 // ═══════════════════════════════════════════════════
-//  資料結構
-//  groups: [{id, name, items:[{id, name, unit, price}]}]
-//  currentEstimate: {clientName, taxRate, note, activeGroupId, items:[...]}
+//  STORAGE: IndexedDB（手機相容）+ fallback to memory
 // ═══════════════════════════════════════════════════
+let _db = null;
+const STORE = 'kv';
 
-// 舊資料遷移：若有舊版 lib_data（flat array），包入預設群組
-function loadGroups() {
-    const raw = localStorage.getItem('groups_data');
-    if (raw) return JSON.parse(raw);
-    // 遷移舊資料
-    const oldLib = JSON.parse(localStorage.getItem('lib_data') || 'null');
-    const defaultItems = oldLib && Array.isArray(oldLib) && oldLib.length
-        ? oldLib
-        : [
-            { id: 1, name: '水泥粉刷',   unit: '坪',  price: 2500 },
-            { id: 2, name: '矽利康施工', unit: '支',  price: 150  }
-          ];
-    return [{ id: Date.now(), name: '預設', items: defaultItems }];
+function openDB() {
+  return new Promise((res, rej) => {
+    if (_db) return res(_db);
+    const req = indexedDB.open('quotation_sys', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+    req.onsuccess = e => { _db = e.target.result; res(_db); };
+    req.onerror   = () => rej('idb error');
+  });
+}
+async function dbGet(key) {
+  try {
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const r = tx.objectStore(STORE).get(key);
+      r.onsuccess = () => res(r.result ?? null);
+      r.onerror   = rej;
+    });
+  } catch { return null; }
+}
+async function dbSet(key, val) {
+  try {
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(val, key);
+      tx.oncomplete = res;
+      tx.onerror    = rej;
+    });
+  } catch {}
 }
 
-let groups = loadGroups();
-let activeGroupId = groups[0]?.id;
-
-let currentEstimate = JSON.parse(localStorage.getItem('est_current')) || {
-    clientName: '', taxRate: 5, note: '',
-    items: [{ id: Date.now(), name: '', unit: '', price: 0, quantity: 1 }]
+// ═══════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════
+let groups = [];
+let activeGroupId = null;
+let currentEstimate = {
+  clientName:'', quoteDate:'', taxRate:5, note:'',
+  items:[{ id: Date.now(), name:'', unit:'', price:0, quantity:1 }]
 };
+let stampDataURL = null;
 
-// ── 取得目前群組 ──────────────────────────────────
-function activeGroup() {
-    return groups.find(g => g.id === activeGroupId) || groups[0];
+// units for dropdown
+const COMMON_UNITS = ['m²','m','式','坪','個','組','支','顆','盞','桶','才','噸','次','項'];
+
+async function loadGroups() {
+  const raw = await dbGet('groups_data');
+  if (raw) return raw;
+  // fallback: try localStorage
+  try {
+    const ls = localStorage.getItem('groups_data');
+    if (ls) return JSON.parse(ls);
+  } catch {}
+  return [{
+    id: Date.now(), name: '預設',
+    items: [
+      { id: 1, name: '水泥粉刷',   unit: '坪',  price: 2500 },
+      { id: 2, name: '矽利康施工', unit: '支',  price: 150  },
+      { id: 3, name: '油漆',       unit: 'm²',  price: 200  },
+      { id: 4, name: '清運',       unit: '式',  price: 20000},
+      { id: 5, name: '帆布',       unit: 'm²',  price: 500  },
+      { id: 6, name: '燈泡',       unit: '顆',  price: 200  },
+      { id: 7, name: '電燈',       unit: '盞',  price: 300  },
+    ]
+  }];
 }
 
-// ── 取得所有品項（flat，供 datalist）────────────────
-function allItems() {
-    return groups.flatMap(g => g.items);
+async function saveGroups() {
+  await dbSet('groups_data', groups);
+  try { localStorage.setItem('groups_data', JSON.stringify(groups)); } catch {}
 }
 
-// ── 儲存 ─────────────────────────────────────────
-function saveGroups() {
-    localStorage.setItem('groups_data', JSON.stringify(groups));
+async function saveCurrentData() {
+  currentEstimate.clientName = document.getElementById('clientName').value;
+  currentEstimate.quoteDate  = document.getElementById('quoteDate').value;
+  currentEstimate.taxRate    = Number(document.getElementById('taxRate').value);
+  currentEstimate.note       = document.getElementById('note').value;
+  await dbSet('est_current', currentEstimate);
+  try { localStorage.setItem('est_current', JSON.stringify(currentEstimate)); } catch {}
 }
 
-// ══════════════════════════════════════════════════
-//  初始化
-// ══════════════════════════════════════════════════
-function init() {
-    renderGroupTabs();
-    renderGroupPanel();
-    renderEstimate();
-    document.getElementById('clientName').value = currentEstimate.clientName || '';
-    document.getElementById('taxRate').value    = currentEstimate.taxRate ?? 5;
-    document.getElementById('note').value       = currentEstimate.note || '';
-    const lb = localStorage.getItem('last_backup');
-    if (lb) document.getElementById('lastBackupTime').textContent = lb;
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+async function init() {
+  groups = await loadGroups();
+  activeGroupId = groups[0]?.id;
+
+  // load current estimate
+  let saved = await dbGet('est_current');
+  if (!saved) {
+    try { const ls = localStorage.getItem('est_current'); if(ls) saved = JSON.parse(ls); } catch {}
+  }
+  if (saved) currentEstimate = saved;
+  if (!currentEstimate.items?.length) {
+    currentEstimate.items = [{ id: Date.now(), name:'', unit:'', price:0, quantity:1 }];
+  }
+
+  // load stamp
+  stampDataURL = await dbGet('stamp_img');
+  if (!stampDataURL) {
+    try { stampDataURL = localStorage.getItem('stamp_img'); } catch {}
+  }
+  applyStamp();
+
+  // restore fields
+  document.getElementById('clientName').value = currentEstimate.clientName || '';
+  document.getElementById('quoteDate').value  = currentEstimate.quoteDate  || new Date().toISOString().split('T')[0];
+  document.getElementById('taxRate').value    = currentEstimate.taxRate ?? 5;
+  document.getElementById('note').value       = currentEstimate.note || '';
+
+  const lb = await dbGet('last_backup');
+  if (lb) document.getElementById('lastBackupTime').textContent = lb;
+
+  renderGroupTabs();
+  renderGroupPanel();
+  renderEstimate();
 }
 
-// ── 切換頁面 ──────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  VIEW SWITCH
+// ═══════════════════════════════════════════════════
 function switchView(view) {
-    document.getElementById('view-estimate').style.display = view === 'estimate' ? '' : 'none';
-    document.getElementById('view-manage').style.display   = view === 'manage'   ? 'flex' : 'none';
-    document.getElementById('tab-estimate').className = 'tab-btn' + (view === 'estimate' ? ' active' : '');
-    document.getElementById('tab-manage').className   = 'tab-btn' + (view === 'manage'   ? ' active' : '');
+  document.getElementById('view-estimate').style.display = view==='estimate' ? '' : 'none';
+  document.getElementById('view-manage').style.display   = view==='manage'   ? 'flex' : 'none';
+  document.getElementById('tab-estimate').className = 'tab-btn' + (view==='estimate' ? ' active' : '');
+  document.getElementById('tab-manage').className   = 'tab-btn' + (view==='manage'   ? ' active' : '');
 }
 
-// ══════════════════════════════════════════════════
-//  群組管理
-// ══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  STAMP
+// ═══════════════════════════════════════════════════
+function loadStamp(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    stampDataURL = e.target.result;
+    await dbSet('stamp_img', stampDataURL);
+    try { localStorage.setItem('stamp_img', stampDataURL); } catch {}
+    applyStamp();
+    showToast('✅ 印章已上傳');
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+function applyStamp() {
+  const img = document.getElementById('stampImg');
+  const ph  = document.getElementById('stampPlaceholder');
+  if (stampDataURL) {
+    img.src = stampDataURL;
+    img.style.display = '';
+    ph.style.display  = 'none';
+  } else {
+    img.style.display = 'none';
+    ph.style.display  = '';
+  }
+}
+async function clearStamp() {
+  stampDataURL = null;
+  await dbSet('stamp_img', null);
+  try { localStorage.removeItem('stamp_img'); } catch {}
+  applyStamp();
+  showToast('✅ 印章已移除');
+}
+
+// ═══════════════════════════════════════════════════
+//  GROUP MANAGEMENT
+// ═══════════════════════════════════════════════════
+function activeGroup() { return groups.find(g => g.id === activeGroupId) || groups[0]; }
+function allItems()    { return groups.flatMap(g => g.items); }
+
 function renderGroupTabs() {
-    const wrap = document.getElementById('groupTabs');
-    wrap.innerHTML = groups.map(g => `
-        <button class="group-tab${g.id === activeGroupId ? ' active' : ''}"
-            onclick="selectGroup(${g.id})">${escHtml(g.name)}</button>`).join('');
+  document.getElementById('groupTabs').innerHTML = groups.map(g =>
+    `<button class="group-tab${g.id===activeGroupId?' active':''}" onclick="selectGroup(${g.id})">${esc(g.name)}</button>`
+  ).join('');
 }
 
 function renderGroupPanel() {
-    const g = activeGroup();
-    if (!g) {
-        document.getElementById('groupPanelHeader').innerHTML =
-            '<div style="padding:12px;color:var(--text3);font-size:13px;">請先新增一個群組</div>';
-        document.getElementById('libAddForm').style.display = 'none';
-        document.getElementById('libraryItems').innerHTML = '';
-        return;
-    }
-    document.getElementById('libAddForm').style.display = '';
+  const g = activeGroup();
+  if (!g) {
+    document.getElementById('groupPanelHeader').innerHTML = '<div style="padding:12px;color:var(--text3)">請先新增一個群組</div>';
+    document.getElementById('libAddForm').style.display = 'none';
+    document.getElementById('libraryItems').innerHTML = '';
+    return;
+  }
+  document.getElementById('libAddForm').style.display = '';
+  document.getElementById('groupPanelHeader').innerHTML = `
+    <div class="group-name-display">📁 ${esc(g.name)}</div>
+    <button class="group-action-btn" onclick="renameGroup(${g.id})" title="重新命名">✏️</button>
+    <button class="group-action-btn danger" onclick="deleteGroup(${g.id})" title="刪除群組">🗑</button>`;
 
-    // 標題列
-    document.getElementById('groupPanelHeader').innerHTML = `
-        <div class="group-name-display">📁 ${escHtml(g.name)}</div>
-        <button class="group-action-btn" onclick="renameGroup(${g.id})" title="重新命名">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-        </button>
-        <button class="group-action-btn danger" onclick="deleteGroup(${g.id})" title="刪除群組">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>`;
-
-    // 品項列表
-    const c = document.getElementById('libraryItems');
-    const empty = document.getElementById('emptyGroup');
-    if (!g.items.length) {
-        c.innerHTML = ''; empty.style.display = '';
-    } else {
-        empty.style.display = 'none';
-        c.innerHTML = g.items.map(item => `
-            <div class="lib-item">
-                <div class="lib-item-info">
-                    <div class="lib-item-name">${escHtml(item.name)}</div>
-                    <div class="lib-item-meta">${escHtml(item.unit)} ／ $${Number(item.price).toLocaleString()}</div>
-                </div>
-                <button class="lib-del-btn" onclick="removeLibItem(${g.id},${item.id})">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-            </div>`).join('');
-    }
-    updateDatalist();
+  const c = document.getElementById('libraryItems');
+  const empty = document.getElementById('emptyGroup');
+  if (!g.items.length) {
+    c.innerHTML = ''; empty.style.display = '';
+  } else {
+    empty.style.display = 'none';
+    c.innerHTML = g.items.map(item => `
+      <div class="lib-item">
+        <div class="lib-item-info">
+          <div class="lib-item-name">${esc(item.name)}</div>
+          <div class="lib-item-meta">${esc(item.unit)} ／ $${Number(item.price).toLocaleString()}</div>
+        </div>
+        <button class="lib-del-btn" onclick="removeLibItem(${g.id},${item.id})">🗑</button>
+      </div>`).join('');
+  }
+  updateDatalist();
 }
 
-function selectGroup(id) {
-    activeGroupId = id;
-    renderGroupTabs();
-    renderGroupPanel();
-}
+function selectGroup(id) { activeGroupId = id; renderGroupTabs(); renderGroupPanel(); }
 
 function addGroup() {
-    showModal('新增群組', '', '群組名稱（例：A公司）', name => {
-        if (!name) return;
-        const g = { id: Date.now(), name, items: [] };
-        groups.push(g);
-        activeGroupId = g.id;
-        saveGroups();
-        renderGroupTabs();
-        renderGroupPanel();
-        showToast(`✅ 已新增群組「${name}」`);
-    });
+  showModal('新增群組','','群組名稱（例：A公司）', async name => {
+    if (!name) return;
+    const g = { id: Date.now(), name, items: [] };
+    groups.push(g); activeGroupId = g.id;
+    await saveGroups(); renderGroupTabs(); renderGroupPanel();
+    showToast(`✅ 已新增群組「${name}」`);
+  });
 }
-
 function renameGroup(id) {
-    const g = groups.find(x => x.id === id);
-    if (!g) return;
-    showModal('重新命名群組', g.name, '群組名稱', newName => {
-        if (!newName) return;
-        g.name = newName;
-        saveGroups();
-        renderGroupTabs();
-        renderGroupPanel();
-        showToast('✅ 已更新群組名稱');
-    });
+  const g = groups.find(x => x.id === id); if (!g) return;
+  showModal('重新命名群組', g.name, '群組名稱', async newName => {
+    if (!newName) return;
+    g.name = newName; await saveGroups(); renderGroupTabs(); renderGroupPanel();
+    showToast('✅ 已更新群組名稱');
+  });
 }
-
 function deleteGroup(id) {
-    if (groups.length <= 1) { showToast('❌ 至少需要保留一個群組'); return; }
-    const g = groups.find(x => x.id === id);
-    showConfirm(`確定刪除群組「${g?.name}」？\n群組內所有品項也會一起刪除`, () => {
-        groups = groups.filter(x => x.id !== id);
-        activeGroupId = groups[0]?.id;
-        saveGroups();
-        renderGroupTabs();
-        renderGroupPanel();
-        updateDatalist();
-        showToast('✅ 群組已刪除');
-    });
+  if (groups.length <= 1) { showToast('❌ 至少需要保留一個群組'); return; }
+  const g = groups.find(x => x.id === id);
+  showConfirm(`確定刪除群組「${g?.name}」？\n群組內所有品項也會一起刪除`, async () => {
+    groups = groups.filter(x => x.id !== id);
+    activeGroupId = groups[0]?.id;
+    await saveGroups(); renderGroupTabs(); renderGroupPanel(); updateDatalist();
+    showToast('✅ 群組已刪除');
+  });
 }
 
-// ══════════════════════════════════════════════════
-//  品項管理
-// ══════════════════════════════════════════════════
-function addLibraryItem() {
-    const g     = activeGroup();
-    const name  = document.getElementById('libName').value.trim();
-    const unit  = document.getElementById('libUnit').value.trim();
-    const price = Number(document.getElementById('libPrice').value);
-    if (!name) { showToast('❌ 請輸入品項名稱'); return; }
-    if (!g)    { showToast('❌ 請先選擇群組'); return; }
-    g.items.push({ id: Date.now(), name, unit, price });
-    document.getElementById('libName').value  = '';
-    document.getElementById('libUnit').value  = '';
-    document.getElementById('libPrice').value = '';
-    saveGroups();
-    renderGroupPanel();
-    renderEstimate(); // 更新 datalist
-    showToast(`✅ 已新增「${name}」`);
+// ═══════════════════════════════════════════════════
+//  LIBRARY ITEMS
+// ═══════════════════════════════════════════════════
+async function addLibraryItem() {
+  const g    = activeGroup();
+  const name = document.getElementById('libName').value.trim();
+  const unit = document.getElementById('libUnit').value.trim();
+  const price= Number(document.getElementById('libPrice').value);
+  if (!name) { showToast('❌ 請輸入品項名稱'); return; }
+  if (!g)    { showToast('❌ 請先選擇群組'); return; }
+  g.items.push({ id: Date.now(), name, unit, price });
+  document.getElementById('libName').value = '';
+  document.getElementById('libUnit').value = '';
+  document.getElementById('libPrice').value= '';
+  await saveGroups(); renderGroupPanel(); renderEstimate();
+  showToast(`✅ 已新增「${name}」`);
 }
 
-function removeLibItem(groupId, itemId) {
-    const g = groups.find(x => x.id === groupId);
-    if (!g) return;
-    showConfirm('確定刪除此品項？', () => {
-        g.items = g.items.filter(i => i.id !== itemId);
-        saveGroups();
-        renderGroupPanel();
-        updateDatalist();
-        showToast('✅ 品項已刪除');
-    });
+async function removeLibItem(groupId, itemId) {
+  const g = groups.find(x => x.id === groupId); if (!g) return;
+  showConfirm('確定刪除此品項？', async () => {
+    g.items = g.items.filter(i => i.id !== itemId);
+    await saveGroups(); renderGroupPanel(); updateDatalist();
+    showToast('✅ 品項已刪除');
+  });
 }
 
 function updateDatalist() {
-    document.getElementById('lib-options').innerHTML =
-        allItems().map(l => `<option value="${escHtml(l.name)}">${escHtml(l.unit)} / $${l.price}</option>`).join('');
+  // for name autocomplete (hidden datalist)
+  let dl = document.getElementById('lib-options');
+  if (!dl) { dl = document.createElement('datalist'); dl.id = 'lib-options'; document.body.appendChild(dl); }
+  dl.innerHTML = allItems().map(l => `<option value="${esc(l.name)}">`).join('');
 }
 
-// ══════════════════════════════════════════════════
-//  報價單
-// ══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  ESTIMATE / EXCEL TABLE
+// ═══════════════════════════════════════════════════
+function unitSelectHTML(itemId, currentUnit) {
+  const options = COMMON_UNITS.map(u =>
+    `<option value="${u}" ${u===currentUnit?'selected':''}>${u}</option>`
+  ).join('');
+  const customOpt = COMMON_UNITS.includes(currentUnit) ? '' :
+    `<option value="${esc(currentUnit)}" selected>${esc(currentUnit)}</option>`;
+  return `<div class="select-wrap">
+    <select class="cell-select" onchange="updateEstimateItem(${itemId},'unit',this.value)">
+      ${customOpt}
+      ${options}
+      <option value="__custom__">自訂…</option>
+    </select></div>`;
+}
+
 function renderEstimate() {
-    updateDatalist();
-    const c = document.getElementById('estimateItems');
-    c.innerHTML = currentEstimate.items.map(item => `
-        <div class="item-row">
-            <div class="item-top">
-                <input type="text" list="lib-options"
-                    value="${escHtml(item.name)}"
-                    oninput="updateEstimateItem(${item.id},'name',this.value)"
-                    class="item-name-input" placeholder="品項名稱…">
-                <button class="del-btn no-print" onclick="removeEstimateItem(${item.id})">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-            </div>
-            <div class="item-bottom">
-                <input type="text" value="${escHtml(item.unit)}"
-                    oninput="updateEstimateItem(${item.id},'unit',this.value)"
-                    class="item-unit-input" placeholder="單位">
-                <input type="number" value="${item.price}"
-                    oninput="updateEstimateItem(${item.id},'price',this.value)"
-                    class="item-price-input" placeholder="單價">
-                <div class="qty-ctrl no-print">
-                    <button class="qty-btn" onclick="changeQty(${item.id},-1)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    </button>
-                    <input type="number" value="${item.quantity}"
-                        oninput="updateEstimateItem(${item.id},'quantity',this.value)"
-                        class="qty-input">
-                    <button class="qty-btn" onclick="changeQty(${item.id},1)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    </button>
-                </div>
-                <span class="item-subtotal">$${(item.price * item.quantity).toLocaleString()}</span>
-            </div>
-        </div>`).join('');
-    updateTotals();
+  updateDatalist();
+  const tbody = document.getElementById('estimateItems');
+  tbody.innerHTML = currentEstimate.items.map((item, idx) => `
+    <tr>
+      <td style="text-align:center;font-size:12px;color:var(--text2);padding:4px;">${idx+1}</td>
+      <td>
+        <input type="text" list="lib-options"
+          value="${esc(item.name)}"
+          oninput="updateEstimateItem(${item.id},'name',this.value)"
+          class="cell-in" placeholder="品項名稱…">
+      </td>
+      <td>${unitSelectHTML(item.id, item.unit||'式')}</td>
+      <td>
+        <input type="number" value="${item.price}"
+          oninput="updateEstimateItem(${item.id},'price',this.value)"
+          class="cell-in cell-num" placeholder="0">
+      </td>
+      <td>
+        <div class="qty-wrap">
+          <button class="qty-btn no-print" onclick="changeQty(${item.id},-1)">−</button>
+          <input type="number" value="${item.quantity}"
+            oninput="updateEstimateItem(${item.id},'quantity',this.value)"
+            class="qty-in">
+          <button class="qty-btn no-print" onclick="changeQty(${item.id},1)">＋</button>
+        </div>
+      </td>
+      <td class="cell-subtotal" id="sub_${item.id}">$${(item.price*item.quantity).toLocaleString()}</td>
+      <td class="no-print">
+        <button class="del-btn" onclick="removeEstimateItem(${item.id})">✕</button>
+      </td>
+    </tr>`).join('');
+
+  // unit select custom handler
+  tbody.querySelectorAll('select.cell-select').forEach(sel => {
+    sel.addEventListener('change', function() {
+      if (this.value === '__custom__') {
+        const id = Number(this.closest('tr').querySelector('.cell-in').getAttribute('data-id') ||
+          this.getAttribute('onchange').match(/\d+/)?.[0]);
+        showModal('自訂單位','','輸入單位名稱', val => {
+          if (!val) return;
+          const item = currentEstimate.items.find(i => i.id === Number(this.getAttribute('onchange').match(/\d+/)[0]));
+          if (item) { item.unit = val; renderEstimate(); saveCurrentData(); }
+        });
+      }
+    });
+  });
+
+  updateTotals();
 }
 
 function changeQty(id, delta) {
-    const item = currentEstimate.items.find(i => i.id === id);
-    if (item) { item.quantity = Math.max(0, (item.quantity||0)+delta); renderEstimate(); saveCurrentData(); }
+  const item = currentEstimate.items.find(i => i.id === id);
+  if (item) { item.quantity = Math.max(0,(item.quantity||0)+delta); renderEstimate(); saveCurrentData(); }
 }
 function addEstimateItem() {
-    currentEstimate.items.push({ id: Date.now(), name:'', unit:'', price:0, quantity:1 });
-    renderEstimate(); saveCurrentData();
+  currentEstimate.items.push({ id: Date.now(), name:'', unit:'式', price:0, quantity:1 });
+  renderEstimate(); saveCurrentData();
+  // scroll to bottom of table
+  setTimeout(() => {
+    const tbody = document.getElementById('estimateItems');
+    const lastRow = tbody.lastElementChild;
+    if (lastRow) lastRow.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 100);
 }
 function removeEstimateItem(id) {
-    if (currentEstimate.items.length > 1) {
-        currentEstimate.items = currentEstimate.items.filter(i => i.id !== id);
-        renderEstimate(); saveCurrentData();
-    }
+  if (currentEstimate.items.length > 1) {
+    currentEstimate.items = currentEstimate.items.filter(i => i.id !== id);
+    renderEstimate(); saveCurrentData();
+  }
 }
 function updateEstimateItem(id, field, value) {
-    const item = currentEstimate.items.find(i => i.id === id);
-    if (!item) return;
-    item[field] = (field==='price'||field==='quantity') ? Number(value) : value;
-    if (field === 'name') {
-        const match = allItems().find(l => l.name === value);
-        if (match) { item.price = match.price; item.unit = match.unit; renderEstimate(); return; }
-    }
-    const rows = document.getElementById('estimateItems').querySelectorAll('.item-row');
-    const idx  = currentEstimate.items.indexOf(item);
-    if (rows[idx]) { const s = rows[idx].querySelector('.item-subtotal'); if(s) s.textContent='$'+(item.price*item.quantity).toLocaleString(); }
-    updateTotals(); saveCurrentData();
-}
-function updateTotals() {
-    const sub = currentEstimate.items.reduce((s,i)=>s+i.price*i.quantity, 0);
-    const rate = Number(document.getElementById('taxRate').value)||0;
-    const tax  = Math.round(sub*rate/100);
-    document.getElementById('subtotalDisplay').textContent  = '$'+sub.toLocaleString();
-    document.getElementById('taxDisplay').textContent       = '$'+tax.toLocaleString();
-    document.getElementById('grandTotalDisplay').textContent = '$'+(sub+tax).toLocaleString();
-}
-function saveCurrentData() {
-    currentEstimate.clientName = document.getElementById('clientName').value;
-    currentEstimate.taxRate    = Number(document.getElementById('taxRate').value);
-    currentEstimate.note       = document.getElementById('note').value;
-    localStorage.setItem('est_current', JSON.stringify(currentEstimate));
+  const item = currentEstimate.items.find(i => i.id === id);
+  if (!item) return;
+  if (field === 'price' || field === 'quantity') {
+    item[field] = Number(value);
+  } else {
+    item[field] = value;
+  }
+  if (field === 'name') {
+    const match = allItems().find(l => l.name === value);
+    if (match) { item.price = match.price; item.unit = match.unit; renderEstimate(); saveCurrentData(); return; }
+  }
+  // update subtotal inline without full re-render
+  const sub = document.getElementById('sub_'+id);
+  if (sub) sub.textContent = '$'+(item.price*item.quantity).toLocaleString();
+  updateTotals();
+  saveCurrentData();
 }
 
-// ══════════════════════════════════════════════════
-//  備份與還原
-// ══════════════════════════════════════════════════
+function updateTotals() {
+  const sub = currentEstimate.items.reduce((s,i) => s + i.price*i.quantity, 0);
+  const tax  = Math.round(sub * (Number(document.getElementById('taxRate').value)||0) / 100);
+  document.getElementById('subtotalDisplay').textContent  = '$'+sub.toLocaleString();
+  document.getElementById('taxDisplay').textContent       = '$'+tax.toLocaleString();
+  document.getElementById('grandTotalDisplay').textContent= '$'+(sub+tax).toLocaleString();
+}
+
+// ═══════════════════════════════════════════════════
+//  BACKUP
+// ═══════════════════════════════════════════════════
 function exportData() {
-    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
-    showModal('匯出備份', `估價系統備份_${date}`, '輸入備份檔案名稱', filename => {
-        if (!filename) return;
-        const data = {
-            version: 2,
-            exportedAt: new Date().toISOString(),
-            groups: groups,
-            currentEstimate: currentEstimate
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href = url; a.download = filename.endsWith('.json') ? filename : filename+'.json';
-        a.click(); URL.revokeObjectURL(url);
-        const now = new Date().toLocaleString('zh-TW');
-        localStorage.setItem('last_backup', now);
-        document.getElementById('lastBackupTime').textContent = now;
-        showToast('✅ 備份已下載！請存至安全位置');
-    });
+  const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+  showModal('匯出備份', `估價系統備份_${date}`, '輸入備份檔案名稱', async filename => {
+    if (!filename) return;
+    const data = { version:3, exportedAt:new Date().toISOString(), groups, currentEstimate };
+    const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename.endsWith('.json') ? filename : filename+'.json';
+    a.click(); URL.revokeObjectURL(url);
+    const now = new Date().toLocaleString('zh-TW');
+    await dbSet('last_backup', now);
+    document.getElementById('lastBackupTime').textContent = now;
+    showToast('✅ 備份已下載！請存至安全位置');
+  });
 }
 
 function importData(event) {
-    const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        try {
-            const data = JSON.parse(e.target.result);
-            // 支援 v1（flat library）和 v2（groups）
-            let importedGroups;
-            if (data.groups && Array.isArray(data.groups)) {
-                importedGroups = data.groups;
-            } else if (data.library && Array.isArray(data.library)) {
-                importedGroups = [{ id: Date.now(), name: '匯入資料', items: data.library }];
-            } else { showToast('❌ 檔案格式錯誤'); return; }
-
-            const totalItems = importedGroups.reduce((s,g)=>s+g.items.length,0);
-            showConfirm(`確定還原備份？\n共 ${importedGroups.length} 個群組、${totalItems} 個品項\n備份時間：${data.exportedAt ? new Date(data.exportedAt).toLocaleString('zh-TW') : '不明'}\n\n⚠️ 目前所有群組與品項將被取代`, () => {
-                groups = importedGroups;
-                activeGroupId = groups[0]?.id;
-                if (data.currentEstimate) {
-                    currentEstimate = data.currentEstimate;
-                    document.getElementById('clientName').value = currentEstimate.clientName||'';
-                    document.getElementById('taxRate').value    = currentEstimate.taxRate??5;
-                    document.getElementById('note').value       = currentEstimate.note||'';
-                }
-                saveGroups();
-                localStorage.setItem('est_current', JSON.stringify(currentEstimate));
-                renderGroupTabs(); renderGroupPanel(); renderEstimate();
-                showToast(`✅ 已還原 ${importedGroups.length} 個群組`);
-            });
-        } catch { showToast('❌ 讀取失敗，請確認檔案正確'); }
-        event.target.value = '';
-    };
-    reader.readAsText(file, 'utf-8');
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let importedGroups;
+      if (data.groups && Array.isArray(data.groups)) {
+        importedGroups = data.groups;
+      } else if (data.library && Array.isArray(data.library)) {
+        importedGroups = [{ id:Date.now(), name:'匯入資料', items:data.library }];
+      } else { showToast('❌ 檔案格式錯誤'); return; }
+      const totalItems = importedGroups.reduce((s,g)=>s+g.items.length,0);
+      showConfirm(`確定還原備份？\n共 ${importedGroups.length} 個群組、${totalItems} 個品項\n備份時間：${data.exportedAt ? new Date(data.exportedAt).toLocaleString('zh-TW') : '不明'}\n\n⚠️ 目前所有群組與品項將被取代`, async () => {
+        groups = importedGroups;
+        activeGroupId = groups[0]?.id;
+        if (data.currentEstimate) {
+          currentEstimate = data.currentEstimate;
+          document.getElementById('clientName').value = currentEstimate.clientName||'';
+          document.getElementById('quoteDate').value  = currentEstimate.quoteDate||'';
+          document.getElementById('taxRate').value    = currentEstimate.taxRate??5;
+          document.getElementById('note').value       = currentEstimate.note||'';
+        }
+        await saveGroups();
+        await dbSet('est_current', currentEstimate);
+        renderGroupTabs(); renderGroupPanel(); renderEstimate();
+        showToast(`✅ 已還原 ${importedGroups.length} 個群組`);
+      });
+    } catch { showToast('❌ 讀取失敗，請確認檔案正確'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
-// ══════════════════════════════════════════════════
-//  自訂 Modal（輸入框 + 確認框）
-// ══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════
 function showModal(title, defaultVal, placeholder, onOk) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-        <div class="modal-box">
-            <div class="modal-title">${escHtml(title)}</div>
-            <input class="modal-input" value="${escHtml(defaultVal)}" placeholder="${escHtml(placeholder)}" maxlength="40">
-            <div class="modal-btns">
-                <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
-                <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
-    const input = overlay.querySelector('.modal-input');
-    input.focus(); input.select();
-    overlay.querySelector('#modalOkBtn').onclick = () => {
-        const val = input.value.trim(); overlay.remove(); onOk(val);
-    };
-    input.addEventListener('keydown', e => { if(e.key==='Enter'){ const val=input.value.trim(); overlay.remove(); onOk(val); }});
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">${esc(title)}</div>
+      <input class="modal-input" value="${esc(defaultVal)}" placeholder="${esc(placeholder)}" maxlength="60">
+      <div class="modal-btns">
+        <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector('.modal-input');
+  input.focus(); input.select();
+  overlay.querySelector('#modalOkBtn').onclick = () => { const v=input.value.trim(); overlay.remove(); onOk(v); };
+  input.addEventListener('keydown', e => { if(e.key==='Enter'){ const v=input.value.trim(); overlay.remove(); onOk(v); }});
 }
 
 function showConfirm(msg, onOk) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-        <div class="modal-box">
-            <div class="modal-title" style="white-space:pre-line;font-size:14px;font-weight:700;">${escHtml(msg)}</div>
-            <div class="modal-btns">
-                <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
-                <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector('#modalOkBtn').onclick = () => { overlay.remove(); onOk(); };
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title" style="white-space:pre-line;font-size:14px;">${esc(msg)}</div>
+      <div class="modal-btns">
+        <button class="modal-btn modal-btn-cancel" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="modal-btn modal-btn-ok" id="modalOkBtn">確定</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#modalOkBtn').onclick = () => { overlay.remove(); onOk(); };
 }
 
-// ── Toast ────────────────────────────────────────
 let _toastTimer;
 function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── 工具 ─────────────────────────────────────────
-function escHtml(s) {
-    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ═══════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════
 init();
 </script>
 </body>
