@@ -300,8 +300,12 @@ textarea#note:focus{border-color:var(--accent);}
 /* ═══════════════════════════════════════
    PRINT STYLES
 ═══════════════════════════════════════ */
+/* ── Print-only elements ── */
+.print-only { display:none; }
+
 @media print {
   .no-print{display:none !important;}
+  .print-only { display:block !important; }
   body{background:#fff;padding:0;}
   #app{max-width:100%;}
   .card{box-shadow:none;border:1px solid #ccc;}
@@ -314,6 +318,32 @@ textarea#note:focus{border-color:var(--accent);}
   .stamp-box{min-height:100px;border:1px solid #ccc;}
   .sig-box{min-height:100px;border:1px solid #ccc;}
   .stamp-section{display:none !important;}
+
+  /* 列印用標題區塊 */
+  .print-header {
+    display:flex !important;
+    justify-content:space-between;
+    align-items:flex-end;
+    padding:6px 2px 10px;
+    border-bottom:2px solid #2D5E43;
+    margin-bottom:6px;
+  }
+  .print-header-left { display:flex; flex-direction:column; gap:3px; }
+  .print-client-name { font-size:17px; font-weight:900; color:#1E1A14; }
+  .print-date { font-size:12px; color:#7A6F62; }
+  .print-doc-title { font-size:13px; font-weight:700; color:#2D5E43; letter-spacing:.05em; }
+
+  /* 列印用備註 */
+  .print-note-wrap {
+    display:block !important;
+    margin-top:2px;
+    padding:10px 12px;
+    background:#F8F4EE;
+    border:1px solid #DDD6CC;
+    border-radius:8px;
+  }
+  .print-note-label { font-size:11px; font-weight:700; color:#B0A898; letter-spacing:.05em; margin-bottom:4px; }
+  .print-note-text { font-size:13px; color:#1E1A14; white-space:pre-wrap; line-height:1.6; min-height:20px; }
 }
 
 /* ── Responsive ── */
@@ -365,6 +395,15 @@ textarea#note:focus{border-color:var(--accent);}
       </div>
     </div>
 
+    <!-- 列印用標題（螢幕隱藏，列印顯示） -->
+    <div class="print-only print-header" id="printHeader">
+      <div class="print-header-left">
+        <div class="print-client-name" id="printClientName"></div>
+        <div class="print-date" id="printDate"></div>
+      </div>
+      <div class="print-doc-title">報　價　單</div>
+    </div>
+
     <!-- Excel-style table -->
     <div class="card">
       <div class="excel-wrap">
@@ -400,6 +439,11 @@ textarea#note:focus{border-color:var(--accent);}
       <div class="note-wrap no-print">
         <span class="note-label">備註事項</span>
         <textarea id="note" oninput="saveCurrentData()" rows="3" placeholder="付款說明、備注…"></textarea>
+      </div>
+      <!-- 列印用備註（螢幕隱藏，列印顯示） -->
+      <div class="print-only print-note-wrap" id="printNoteWrap">
+        <div class="print-note-label">備註事項</div>
+        <div class="print-note-text" id="printNote"></div>
       </div>
     </div>
 
@@ -588,6 +632,23 @@ async function saveCurrentData() {
   currentEstimate.note       = document.getElementById('note').value;
   await dbSet('est_current', currentEstimate);
   try { localStorage.setItem('est_current', JSON.stringify(currentEstimate)); } catch {}
+  syncPrintMirrors();
+}
+
+function syncPrintMirrors() {
+  const client = currentEstimate.clientName || '';
+  const date   = currentEstimate.quoteDate  || '';
+  const note   = currentEstimate.note       || '';
+
+  const elClient = document.getElementById('printClientName');
+  const elDate   = document.getElementById('printDate');
+  const elNote   = document.getElementById('printNote');
+  const elNoteWrap = document.getElementById('printNoteWrap');
+
+  if (elClient) elClient.textContent = client ? '客戶：' + client : '';
+  if (elDate)   elDate.textContent   = date   ? '日期：' + date.replace(/-/g,'/') : '';
+  if (elNote)   elNote.textContent   = note;
+  if (elNoteWrap) elNoteWrap.style.display = note ? '' : 'none';
 }
 
 // ═══════════════════════════════════════════════════
@@ -626,6 +687,7 @@ async function init() {
   renderGroupTabs();
   renderGroupPanel();
   renderEstimate();
+  syncPrintMirrors();
 }
 
 // ═══════════════════════════════════════════════════
